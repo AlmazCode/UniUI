@@ -4,7 +4,7 @@ from pathlib import Path
 
 screen = Screen(resolution = Vector2(1280, 720), title = "Test App", flags = pygame.DOUBLEBUF)
 
-font_path = Path(__file__).parent / "assets\\FiraCode-Regular.ttf"
+font_path = Path(__file__).parent / "assets" / "FiraCode-Regular.ttf"
 
 class CustomText(Text):
     def __init__(self, *, name: str, **args) -> None:

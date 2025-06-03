@@ -86,7 +86,7 @@ class Console:
             print(f"[{Console._get_formatted_time()}] {color}UniUI : {message}{Color.Style.RESET}")
     
     @staticmethod
-    def _get_root_caller_info(full_code_context: bool = False) -> CallerInfo:
+    def _get_root_caller_info() -> CallerInfo:
         stack = inspect.stack()
 
         update_index = None
@@ -103,23 +103,22 @@ class Console:
         filename = target_frame.filename
         lineno = target_frame.lineno
 
-        if full_code_context:
-            source_lines = []
-            offset = 0
-            while 1:
-                line = linecache.getline(filename, lineno + offset)
-                if not line:
-                    break
-                source_lines.append(line)
-                try:
-                    ast.parse("".join(source_lines))
-                    break
-                except SyntaxError:
-                    ...
-                offset += 1
-            code_context = "".join(source_lines).strip() if source_lines else None
-        else:
-            code_context = target_frame.code_context[0].strip() if target_frame.code_context else None
+        source_lines = []
+        offset = 0
+        
+        while 1:
+            line = linecache.getline(filename, lineno + offset)
+            if not line:
+                break
+            source_lines.append(line)
+            try:
+                ast.parse("".join(source_lines))
+                break
+            except SyntaxError:
+                ...
+            offset += 1
+
+        code_context = "".join(source_lines).strip() if source_lines else None
 
         return CallerInfo(filename, lineno, code_context)
 

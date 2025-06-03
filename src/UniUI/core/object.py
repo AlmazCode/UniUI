@@ -15,7 +15,7 @@ class Object:
         self._name: str                     = name
         self._parent: Object                = args.get("parent", None)
         self.__children: list[Object]       = []
-        self._root_caller_info: CallerInfo = Console._get_root_caller_info(True)
+        self._root_caller_info: CallerInfo = Console._get_root_caller_info()
 
         self._active: bool                  = args.get("active", True)
 

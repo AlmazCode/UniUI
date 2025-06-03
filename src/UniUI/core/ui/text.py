@@ -104,7 +104,7 @@ class Text(Object):
             else:
                 self.__font = pygame.font.SysFont(DEFAULT_FONT, self._font_size)
         except Exception as e:
-            Console.error(f"Failed to load font: {e}", True, self._root_caller_info)
+            Console.error(f"Failed to load font: {e}")
             self.__font = pygame.font.SysFont(DEFAULT_FONT, self._font_size)
 
     def __render_lines(self) -> tuple[dict[pygame.Surface, tuple[int, int]], int, int]:
