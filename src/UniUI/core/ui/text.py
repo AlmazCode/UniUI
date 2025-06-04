@@ -1,9 +1,12 @@
 import pygame
+import numbers
+
 from ..object import Object
 from ..math.vector2 import Vector2
 from ..ui.color import Color
 from ..ui.align import TextAlign
 from ..tools.console import Console
+from .. import settings
 
 DEFAULT_FONT = "Arial"
 
@@ -16,6 +19,9 @@ class Text(Object):
         self._font_path: str | None = args.get("font", None)
         self._font_size: int = args.get("font_size", 16)
         self._text_align: TextAlign = args.get("text_align", TextAlign.LEFT)
+        
+        padding = args.get("padding", 0)
+        self._padding: float = padding if isinstance(padding, numbers.Real) else 0
 
         self.__font: pygame.font.Font = None
         self.__surface: pygame.Surface = None
@@ -45,6 +51,10 @@ class Text(Object):
     @property
     def text_align(self) -> str:
         return self._text_align
+
+    @property
+    def padding(self) -> str:
+        return self._padding
     
     # === Setters ===
     @text.setter
@@ -76,7 +86,7 @@ class Text(Object):
             self.__load_font()
             self.__update_surface()
         else:
-            Console.error("Font size must be an integer")
+            Console.error("The value must be an integer")
     
     @text_align.setter
     def text_align(self, value: TextAlign) -> None:
@@ -84,16 +94,15 @@ class Text(Object):
             self._text_align = value
             self.__update_surface()
         else:
-            Console.error("Text's Align must be an integer")
-
-    # @Object.position.setter
-    # def position(self, value: Vector2) -> Vector2:
-    #     Object.position.fset(self, value)
-
-    # @Object.scale.setter
-    # def scale(self, value: Vector2) -> Vector2:
-    #     Object.scale.fset(self, value)
-    #     self.__update_surface()
+            Console.error("The value must be an integer")
+    
+    @padding.setter
+    def padding(self, value: numbers.Real) -> None:
+        if isinstance(value, numbers.Real):
+            self._padding = value
+            self.__update_surface()
+        else:
+            Console.error("The value must be a number")
 
     # === Private methods ===
 
@@ -113,11 +122,13 @@ class Text(Object):
         width = height = 0
 
         for line in lines:
-            surf = self.__font.render(line, True, self._color.rgba)
+            surf = self.__font.render(line, True, self._color.rgba).convert_alpha()
             size = surf.get_size()
             rendered_lines[surf] = size
             height += size[1]
             width = max(width, size[0])
+
+        height += self._padding * (len(lines) - 1)
 
         return rendered_lines, width, height
 
@@ -135,10 +146,16 @@ class Text(Object):
                     x = 0
 
             surface.blit(surf, (x, y))
-            y += rendered_lines[surf][1]
+            y += rendered_lines[surf][1] + self._padding
 
-        pygame.draw.rect(surface, (255, 0, 0), surface.get_rect(), 1)  # Debug border
+        if settings.DEBUG_APP:
+            pygame.draw.rect(surface, (255, 0, 0), surface.get_rect(), 1)  # Debug border
 
+        # Apply rotation
+        if self._transform._rotation != 0:
+            surface = pygame.transform.rotozoom(surface, self._transform._rotation, 1)
+            width, height = surface.get_size()
+        
         # Apply scaling
         if self.global_scale.x != 1 and self.global_scale.y != 1:
             new_size = (Vector2(width, height) * self.global_scale).xy

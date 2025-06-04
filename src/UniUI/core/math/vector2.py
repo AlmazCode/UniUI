@@ -1,10 +1,10 @@
-from typing import Union
-from ..tools.console import Console
 import numbers
 import math
 
+from ..tools.console import Console
+
 class Vector2:
-    def __init__(self, x: Union[int, float], y: Union[int, float]) -> None:
+    def __init__(self, x: numbers.Real, y: numbers.Real) -> None:
         self._x = x if isinstance(x, numbers.Real) else 0.0
         self._y = y if isinstance(y, numbers.Real) else 0.0
 
@@ -53,7 +53,7 @@ class Vector2:
         return self._x
 
     @x.setter
-    def x(self, value: Union[int, float]) -> None:
+    def x(self, value: numbers.Real) -> None:
         if isinstance(value, numbers.Real):
             self._x = value
 
@@ -62,7 +62,7 @@ class Vector2:
         return self._y
 
     @y.setter
-    def y(self, value: Union[int, float]) -> None:
+    def y(self, value: numbers.Real) -> None:
         if isinstance(value, numbers.Real):
             self._y = value
 

@@ -6,6 +6,7 @@ from .core.ui.text import Text
 from .core.math.vector2 import Vector2
 from .core.ui.transform import Transform
 from .core.ui.align import Align, TextAlign
+from .core import settings
 
 Time = _Time()
 

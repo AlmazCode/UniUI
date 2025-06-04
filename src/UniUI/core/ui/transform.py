@@ -1,3 +1,5 @@
+import numbers
+
 from ..math.vector2 import Vector2
 from ..utils.event import Event
 from ..tools.console import Console
@@ -7,6 +9,7 @@ class Transform:
     def __init__(self,
                  position: Vector2 = None,
                  scale: Vector2 = None,
+                 rotation: Vector2 = None,
                  width: float = None,
                  height: float = None,
                  on_property_changed_callback: Callable = None
@@ -14,10 +17,11 @@ class Transform:
         
         self._position  = position if position is not None and isinstance(position, Vector2) else Vector2(0, 0)
         self._scale     = scale if scale is not None and isinstance(scale, Vector2) else Vector2(1, 1)
+        self._rotation  = rotation if rotation is not None and isinstance(rotation, numbers.Real) else 0
         self._width     = width if width is not None and isinstance(width, float | int) else 0
         self._height    = height if height is not None and isinstance(height, float | int) else 0
 
-        self._on_property_changed = Event([on_property_changed_callback])
+        self._on_property_changed = Event([on_property_changed_callback] if on_property_changed_callback is not None else [])
     
     @property
     def position(self) -> Vector2:
@@ -26,6 +30,10 @@ class Transform:
     @property
     def scale(self) -> Vector2:
         return self._scale
+
+    @property
+    def rotation(self) -> numbers.Real:
+        return self._rotation
 
     @property
     def width(self) -> Vector2:
@@ -55,6 +63,14 @@ class Transform:
         else:
             Console.error("The value can only be a vector")
     
+    @rotation.setter
+    def rotation(self, value: numbers.Real) -> None:
+        if isinstance(value, numbers.Real):
+            self._rotation = value
+            self._on_property_changed.invoke()
+        else:
+            Console.error("The value can only be a vector")
+    
     @width.setter
     def width(self, value: float | int) -> None:
         if isinstance(value, float | int):
@@ -77,13 +93,13 @@ class Transform:
             if len(value) == 2:
                 call_event: bool = False
                 if isinstance(value[0], float | int):
-                    self._width = value
+                    self._width = value[0]
                     call_event = True
                 else:
                     Console.error("The width can only be a float or an integer")
                 
                 if isinstance(value[1], float | int):
-                    self._height = value
+                    self._height = value[1]
                     call_event = True
                 else:
                     Console.error("The height can only be a float or an integer")

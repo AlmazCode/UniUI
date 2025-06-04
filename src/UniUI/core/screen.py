@@ -28,6 +28,7 @@ class Screen:
         self.transform: Transform = Transform(
             None,
             None,
+            None,
             resolution.x if isinstance(resolution, Vector2) else 0,
             resolution.y if isinstance(resolution, Vector2) else 0
         )
@@ -52,7 +53,7 @@ class Screen:
         if self.transform.wh == (0, 0):
             info = pygame.display.Info()
             self.transform.wh = (info.current_w, info.current_h)
-        self.__screen = pygame.display.set_mode(self.transform.wh, self.flags)
+        self.__screen = pygame.display.set_mode(self.transform.wh, self.flags, vsync=1)
         pygame.display.set_caption(self.title)
 
         Console.clear()

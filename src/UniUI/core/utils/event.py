@@ -1,5 +1,5 @@
 class Event:
-    def __init__(self, listeners: list = None):
+    def __init__(self, listeners: list):
         self._listeners = [] if listeners is None else listeners
 
     def add_listener(self, callback):

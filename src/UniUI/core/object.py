@@ -22,6 +22,7 @@ class Object:
         self._transform                     = Transform(
             args.get("position", Vector2(0, 0)),
             args.get("scale", Vector2(1, 1)),
+            args.get("rotation", 0),
             args.get("width", 0),
             args.get("height", 0)
         )

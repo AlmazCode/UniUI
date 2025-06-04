@@ -1,8 +1,10 @@
 import pygame
+import UniUI
 from UniUI import Screen, Vector2, Text, Time, Align, TextAlign
 from pathlib import Path
 
 screen = Screen(resolution = Vector2(1280, 720), title = "Test App", flags = pygame.DOUBLEBUF)
+UniUI.settings.DEBUG_APP = True
 
 font_path = Path(__file__).parent / "assets" / "FiraCode-Regular.ttf"
 
@@ -12,10 +14,11 @@ class CustomText(Text):
     
     def update(self) -> None:
         super().update()
-        self.text = f"FPS: {screen.fps}\nHello, World!"
+        self.text = f"FPS: {screen.fps}\nHello, World!\nline №3"
+        self.transform.rotation += 100 * Time.delta_time
 
 text = CustomText(name = "text", font_size = 72, position = Vector2(0, 0),
                   font = font_path,
-                  align = Align.MIDDLE, text_align = TextAlign.MIDDLE)
+                  align = Align.MIDDLE, text_align = TextAlign.MIDDLE, padding = 50, rotation = 45)
 
 screen.start()
