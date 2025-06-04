@@ -3,12 +3,15 @@ import sys
 
 pygame.init()
 
+from typing import NoReturn
+
 from .object import Object
 from .math.vector2 import Vector2
 from .tools.console import Console
 from .utils.system import get_refresh_rate
 from .time import Time
 from .ui.transform import Transform
+from . import settings
 
 class Screen:
 
@@ -41,8 +44,8 @@ class Screen:
         )
         self.__fps = None
         self.__objects: list[Object] = []
-        self.__deactivated_objects: list[Object] = []
-        self.__activated_objects: list[Object] = []
+        self.__deactivated_objects: dict[Object, int] = {}
+        self.__activated_objects: dict[Object, int] = {}
         self.__initialize()
     
     @property
@@ -57,7 +60,7 @@ class Screen:
         pygame.display.set_caption(self.title)
 
         Console.clear()
-        Console.Log("The screen has been successfully initialized")
+        Console.log("The screen has been successfully initialized")
     
     def _add_object(self, object: Object) -> None:
         if isinstance(object, Object):
@@ -71,17 +74,26 @@ class Screen:
         else:
             Console.error("This object does not belong to the Object type")
         
-    def _activate_object(self, object: Object) -> None:
+    def _activate_object(self, object: Object, mode: int) -> None:
         if isinstance(object, Object):
-            self.__activated_objects.append(object)
+            self.__activated_objects[object] = mode
+            if self.__deactivated_objects.get(object, None):
+                self.__deactivated_objects.pop(object)
         else:
             Console.error("This object does not belong to the Object type")
     
-    def _deactivate_object(self, object: Object) -> None:
+    def _deactivate_object(self, object: Object, mode: int) -> None:
         if isinstance(object, Object):
-            self.__deactivated_objects.append(object)
+            self.__deactivated_objects[object] = mode
+            if self.__activated_objects.get(object, None):
+                self.__activated_objects.pop(object)
         else:
             Console.error("This object does not belong to the Object type")
+    
+    def quit(self) -> NoReturn:
+        Console.log("The program has completed its work")
+        pygame.quit()
+        sys.exit(0)
     
     def start(self) -> None:
         
@@ -95,29 +107,38 @@ class Screen:
             # events handle
             for event in events:
                 if event.type == pygame.QUIT:
-                    sys.exit(0)
-                    pygame.quit()
+                    self.quit()
             
             # updating
             for object in self.__objects:
                 object.update()
             
+            # if settings.DEBUG_APP:
+            #     Console.log(f"{len(self.__objects)} objects have been updated")
+            
             # activating objects
             if self.__activated_objects:
-                for object in self.__activated_objects:
-                    self._add_object(object)
-                    object._return_children_from_screen()
-                    self.__activated_objects.remove(object)
+                while len(self.__activated_objects) > 0:
+                    (object, mode) = self.__activated_objects.popitem()
+                    if mode == 1:
+                        self._add_object(object)
+                    else:
+                        object._parent.add_child(object, False)
             
             # deactivating objects
             if self.__deactivated_objects:
-                for object in self.__deactivated_objects:
-                    self._remove_object(object)
-                    object._remove_children_from_screen()
-                    self.__deactivated_objects.remove(object)
+                while len(self.__deactivated_objects) > 0:
+                    (object, mode) = self.__deactivated_objects.popitem()
+                    if mode == 1:
+                        self._remove_object(object)
+                    else:
+                        object._parent.remove_child(object, False)
             
             # drawing
             for object in self.__objects:
                 object.draw(self.__screen)
+            
+            # if settings.DEBUG_APP:
+            #     Console.log(f"{len(self.__objects)} objects have been drawed\n{"-"*42}")
             
             pygame.display.update()

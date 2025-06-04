@@ -123,7 +123,7 @@ class Console:
         return CallerInfo(filename, lineno, code_context)
 
     @staticmethod
-    def Log(message: str) -> None:
+    def log(message: str) -> None:
         Console._print_message(message, "Log", Color.Fore.WHITE, False)
     
     @staticmethod

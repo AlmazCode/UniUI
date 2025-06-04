@@ -5,6 +5,8 @@ from .tools.console import Console, CallerInfo
 from .ui.align import Align
 from .ui.transform import Transform
 
+from typing import Union
+
 def import_screen_module() -> None:
     global Screen
     from .screen import Screen
@@ -30,17 +32,19 @@ class Object:
         # endregion
 
         # region method call
-        if Screen.Instance:
-            Screen.Instance._add_object(self)
+        if self._parent and isinstance(self._parent, Object):
+            self._parent.add_child(self)
         else:
-            raise Exception("Create a screen to create objects")
-        if self.parent:
-            self.parent.add_child(self)
+            if Screen.Instance:
+                Screen.Instance._add_object(self)
+            else:
+                raise Exception("Create a screen to create objects")
+            
         self.__initialize_children(args.get("children", None))
         # endregion
     
     def __str__(self) -> str:
-        return f"Object No {id(self)}"
+        return f"Object({self._name=}, {self._parent=})"
 
     def __initialize_children(self, children: list['Object'] | None) -> None:
         if children is None:
@@ -49,32 +53,32 @@ class Object:
         for child in children:
             self.add_child(child)
 
-    def add_child(self, child: 'Object') -> None:
-        if isinstance(child, Object) and child not in self.__children:
-            child._parent = self
+    def add_child(self, child: 'Object', update_parent: bool = True) -> None:
+        if isinstance(child, Object) and (child not in self.__children or not update_parent):
+            if update_parent: child._parent = self
             self.__children.append(child)
         else:
             Console.error("add_child: child must be an Object")
 
-    def remove_child(self, child: 'Object') -> None:
+    def remove_child(self, child: 'Object', update_parent: bool = True) -> None:
         if isinstance(child, Object):
-            child.parent = None
+            if update_parent: child._parent = None
             self.__children.remove(child)
         else:
             Console.error("remove_child: child must be an Object")
     
-    def _remove_children_from_screen(self) -> None:
-        for child in self.__children:
-            child._remove_children_from_screen()
-            Screen.Instance._remove_object(child)
+    # def _remove_children_from_screen(self) -> None:
+    #     for child in self.__children:
+    #         child._remove_children_from_screen()
+    #         Screen.Instance._remove_object(child)
     
-    def _return_children_from_screen(self) -> None:
-        for child in self.__children:
-            child._return_children_from_screen()
-            Screen.Instance._add_object(child)
+    # def _return_children_from_screen(self) -> None:
+    #     for child in self.__children:
+    #         child._return_children_from_screen()
+    #         Screen.Instance._add_object(child)
     
     def _get_align_position(self) -> Vector2:
-        start = Screen.Instance.transform if self.parent is None else self.parent.transform
+        start = Screen.Instance.transform
         end = Vector2(0, 0)
 
         match self._align:
@@ -181,11 +185,18 @@ class Object:
         self._name = value
     
     @parent.setter
-    def parent(self, value: 'Object') -> None:
-        if isinstance(value, Object):
-            self._parent.remove_child(self)
-            self._parent = value
-            self._parent.add_child(self)
+    def parent(self, value: Union['Object', None]) -> None:
+        if isinstance(value, Object | None) and value not in self.__children:
+            if value is not None:
+                if self._parent is None:
+                    Screen.Instance._remove_object(self)
+                else:
+                    self._parent.remove_child(self)
+                self._parent = value
+                self._parent.add_child(self)
+            elif self._parent is not None:
+                Screen.Instance._add_object(self)
+                self._parent.remove_child(self)
         else:
             Console.error("Invalid parent value")
     
@@ -195,12 +206,12 @@ class Object:
             
             # activating object
             if value and not self._active:
-                Screen.Instance._activate_object(self)
+                Screen.Instance._activate_object(self, 0 if self._parent is not None else 1)
             
             # deactivating object
             elif not value and self._active:
                 if self._parent is None or (self.get_root().active and self._parent.active):
-                    Screen.Instance._deactivate_object(self)
+                    Screen.Instance._deactivate_object(self, 0 if self._parent is not None else 1)
             
             self._active = value
         else:
