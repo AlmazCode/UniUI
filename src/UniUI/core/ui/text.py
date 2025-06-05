@@ -162,9 +162,11 @@ class Text(BaseObject):
             width, height = surface.get_size()
         
         # Apply scaling
-        if self.global_scale.x != 1 and self.global_scale.y != 1:
-            new_size = (Vector2(width, height) * self.global_scale).xy
-            surface = pygame.transform.smoothscale(surface, new_size)
+        global_scale = self.global_scale
+        if global_scale.x != 1 and global_scale.y != 1:
+            new_size = (Vector2(width, height) * global_scale).xy
+            surface = pygame.transform.smoothscale(surface, (max(0, new_size[0]), max(0, new_size[1])))
+            width, height = surface.get_size()
         
         self._preffered_size = Vector2(width, height)
         self.__surface = surface

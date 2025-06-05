@@ -1,6 +1,6 @@
 import pygame
 import UniUI
-from UniUI import Screen, Vector2, Text, Time, Align, TextAlign
+from UniUI import Screen, Vector2, Text, Time, Align, TextAlign,BaseObject
 from pathlib import Path
 
 screen = Screen(resolution = Vector2(1280, 720), title = "Test App", flags = pygame.DOUBLEBUF)
@@ -56,5 +56,15 @@ text_bottomleft = CustomText(name="text_bottomleft", parent=text_topright, font_
 text_bottomright = CustomText(name="text_bottomright", parent=text_bottomleft, font_size=22, position=Vector2(0, 0),
                               font=font_path, align=Align.BOTTOMRIGHT, text_align=TextAlign.MIDDLE,
                               padding=50, rotation=45)
+
+class Manager(BaseObject):
+    def __init__(self, *, name: str, **args) -> None:
+        super().__init__(name, **args)
+    
+    def update(self):
+        super().update()
+        text_middle.transform.scale -= 0.1 * Time.delta_time
+
+manager = Manager(name = "Manager")
 
 screen.start()
