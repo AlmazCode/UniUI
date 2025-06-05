@@ -1,4 +1,4 @@
-from .core.object import Object, import_screen_module
+from .core.object import BaseObject, import_screen_module
 from .core.screen import Screen
 from .core.time import Time as _Time
 from .core.ui.color import Color

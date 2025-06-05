@@ -5,7 +5,7 @@ pygame.init()
 
 from typing import NoReturn
 
-from .object import Object
+from .object import BaseObject
 from .math.vector2 import Vector2
 from .tools.console import Console
 from .utils.system import get_refresh_rate
@@ -43,9 +43,9 @@ class Screen:
                         else self.__system_refresh_rate
         )
         self.__fps = None
-        self.__objects: list[Object] = []
-        self.__deactivated_objects: dict[Object, int] = {}
-        self.__activated_objects: dict[Object, int] = {}
+        self.__objects: list[BaseObject] = []
+        self.__deactivated_objects: dict[BaseObject, int] = {}
+        self.__activated_objects: dict[BaseObject, int] = {}
         self.__initialize()
     
     @property
@@ -62,28 +62,28 @@ class Screen:
         Console.clear()
         Console.log("The screen has been successfully initialized")
     
-    def _add_object(self, object: Object) -> None:
-        if isinstance(object, Object):
+    def _add_object(self, object: BaseObject) -> None:
+        if isinstance(object, BaseObject):
             self.__objects.append(object)
         else:
             Console.error("This object does not belong to the Object type")
     
-    def _remove_object(self, object: Object) -> None:
-        if isinstance(object, Object):
+    def _remove_object(self, object: BaseObject) -> None:
+        if isinstance(object, BaseObject):
             self.__objects.remove(object)
         else:
             Console.error("This object does not belong to the Object type")
         
-    def _activate_object(self, object: Object, mode: int) -> None:
-        if isinstance(object, Object):
+    def _activate_object(self, object: BaseObject, mode: int) -> None:
+        if isinstance(object, BaseObject):
             self.__activated_objects[object] = mode
             if self.__deactivated_objects.get(object, None):
                 self.__deactivated_objects.pop(object)
         else:
             Console.error("This object does not belong to the Object type")
     
-    def _deactivate_object(self, object: Object, mode: int) -> None:
-        if isinstance(object, Object):
+    def _deactivate_object(self, object: BaseObject, mode: int) -> None:
+        if isinstance(object, BaseObject):
             self.__deactivated_objects[object] = mode
             if self.__activated_objects.get(object, None):
                 self.__activated_objects.pop(object)

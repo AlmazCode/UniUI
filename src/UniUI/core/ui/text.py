@@ -1,16 +1,17 @@
 import pygame
 import numbers
 
-from ..object import Object
+from ..object import BaseObject
 from ..math.vector2 import Vector2
 from ..ui.color import Color
-from ..ui.align import TextAlign
+from ..ui.align import TextAlign, Align
 from ..tools.console import Console
 from .. import settings
+from ..screen import Screen
 
 DEFAULT_FONT = "Arial"
 
-class Text(Object):
+class Text(BaseObject):
     def __init__(self, name: str, **args: dict[str, object]) -> None:
         super().__init__(name, **args)
 
@@ -22,6 +23,8 @@ class Text(Object):
         
         padding = args.get("padding", 0)
         self._padding: float = padding if isinstance(padding, numbers.Real) else 0
+
+        self._preffered_size: Vector2 = Vector2(0, 0)
 
         self.__font: pygame.font.Font = None
         self.__surface: pygame.Surface = None
@@ -141,7 +144,7 @@ class Text(Object):
                 case TextAlign.MIDDLE:
                     x = width // 2 - rendered_lines[surf][0] // 2
                 case TextAlign.RIGHT:
-                    x = width - rendered_lines[surf][0]
+                    x = height - rendered_lines[surf][0]
                 case _:
                     x = 0
 
@@ -150,6 +153,8 @@ class Text(Object):
 
         if settings.DEBUG_APP:
             pygame.draw.rect(surface, (255, 0, 0), surface.get_rect(), 1)  # Debug border
+            pygame.draw.line(surface, (255, 0, 0), (0, height//2), (width, height//2))
+            pygame.draw.line(surface, (255, 0, 0), (width//2, 0), (width//2, height))
 
         # Apply rotation
         if self._transform._rotation != 0:
@@ -161,17 +166,60 @@ class Text(Object):
             new_size = (Vector2(width, height) * self.global_scale).xy
             surface = pygame.transform.smoothscale(surface, new_size)
         
-        self._transform._width = width
-        self._transform._height = height
+        self._preffered_size = Vector2(width, height)
         self.__surface = surface
     
     def _on_transform_property_changed(self):
         self.__update_surface()
     
+    # def _text_get_align_position(self) -> Vector2:
+    #     start = Screen.Instance.transform
+    #     end = Vector2(0, 0)
+
+    #     match self._align:
+    #         case Align.MIDDLE:
+    #             end.x = (start._width // 2 - self._transform._width // 2)+ self._transform._width // 2 - self._preffered_size.x // 2
+    #             end.y = (start.height // 2 - self._transform.height // 2) + self._transform.height // 2 - self._preffered_size.y // 2
+    #         case Align.LEFT:
+    #             end.x = -self._preffered_size.x // 2
+    #             end.y = start._height // 2 - self._transform._height // 2 - self._preffered_size.y // 2
+    #         case Align.RIGHT:
+    #             end.x = start._width - self._preffered_size.x // 2
+    #             end.y = start._height // 2 - self._transform._height // 2 - self._preffered_size.y // 2
+    #         case Align.TOP:
+    #             end.x = start._width // 2 - self._transform._width // 2 - self._preffered_size.x // 2
+    #             end.y = -self._preffered_size.y // 2
+    #         case Align.BOTTOM:
+    #             end.x = start._width // 2 - self._transform._width // 2 - self._preffered_size.x // 2
+    #             end.y = start._height - self._transform._height - self._preffered_size.y // 2
+
+    #         case Align.TOPLEFT:
+    #             end.x = -self._preffered_size.x // 2
+    #             end.y = -self._preffered_size.y // 2
+    #         case Align.TOPRIGHT:
+    #             end.x = start._width - self._transform._width - self._preffered_size.x // 2
+    #             end.y = -self._preffered_size.y // 2
+            
+    #         case Align.BOTTOMLEFT:
+    #             end.x = -self._preffered_size.x // 2
+    #             end.y = start._height - self._transform._height - self._preffered_size.y // 2
+    #         case Align.BOTTOMRIGHT:
+    #             end.x = start._width - self._transform._width - self._preffered_size.x // 2
+    #             end.y = start._height - self._transform._height - self._preffered_size.y // 2
+            
+    #         case _:
+    #             Console.error("Invalid align value", True, self.__root_caller_info)
+
+    #     return end
+
     # === Public Methods ===
     
     def get_render_position(self) -> Vector2:
-        return self._get_align_position() + self.global_position
+        pos = self._get_align_position()
+        pos.x += self._transform._width // 2 - self._preffered_size.x // 2
+        pos.y += self._transform._height // 2 - self._preffered_size.y // 2
+        pos += self.global_position
+        return pos
 
     # === Pygame Hooks ===
 
@@ -181,4 +229,5 @@ class Text(Object):
     def draw(self, surface: pygame.Surface) -> None:
         if self.__surface:
             surface.blit(self.__surface, self.get_render_position().xy)
+            pygame.draw.rect(surface, (255, 255, 255), (*(self._get_align_position() + self.global_position).xy, *self.transform.wh), 1)
         super().draw(surface)

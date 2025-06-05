@@ -11,22 +11,50 @@ font_path = Path(__file__).parent / "assets" / "FiraCode-Regular.ttf"
 class CustomText(Text):
     def __init__(self, *, name: str, **args) -> None:
         super().__init__(name, **args)
+
+        self.transform.width = 200
+        self.transform.height = 200
     
     def update(self) -> None:
         super().update()
         self.text = f"FPS: {screen.fps}\nHello, World!\nline №3"
         self.transform.rotation += 100 * Time.delta_time
 
-text = CustomText(name = "text", font_size = 72, position = Vector2(0, 0),
-                  font = font_path,
-                  align = Align.MIDDLE, text_align = TextAlign.MIDDLE, padding = 50, rotation = 45)
-text2 = CustomText(name = "text2", parent = text, font_size = 32, position = Vector2(0, 0),
-                  font = font_path,
-                  align = Align.LEFT, text_align = TextAlign.MIDDLE, padding = 50, rotation = 45)
-text3 = CustomText(name = "text3", parent = text2, font_size = 32, position = Vector2(0, 0),
-                  font = font_path,
-                  align = Align.RIGHT, text_align = TextAlign.MIDDLE, padding = 50, rotation = 45)
-text2.parent = None
-text3.active = False
-text3.active = True
+text_middle = CustomText(name="text_middle", font_size=22, position=Vector2(0, 0),
+                         font=font_path, align=Align.MIDDLE, text_align=TextAlign.MIDDLE,
+                         padding=50, rotation=45)
+
+text_left = CustomText(name="text_left", parent=text_middle, font_size=22, position=Vector2(0, 0),
+                       font=font_path, align=Align.LEFT, text_align=TextAlign.MIDDLE,
+                       padding=50, rotation=45)
+
+text_right = CustomText(name="text_right", parent=text_left, font_size=22, position=Vector2(0, 0),
+                        font=font_path, align=Align.RIGHT, text_align=TextAlign.MIDDLE,
+                        padding=50, rotation=45)
+
+
+text_top = CustomText(name="text_top", parent=text_right, font_size=22, position=Vector2(0, 0),
+                      font=font_path, align=Align.TOP, text_align=TextAlign.MIDDLE,
+                      padding=50, rotation=45)
+
+text_bottom = CustomText(name="text_bottom", parent=text_top, font_size=22, position=Vector2(0, 0),
+                         font=font_path, align=Align.BOTTOM, text_align=TextAlign.MIDDLE,
+                         padding=50, rotation=45)
+
+text_topleft = CustomText(name="text_topleft", parent=text_bottom, font_size=22, position=Vector2(0, 0),
+                          font=font_path, align=Align.TOPLEFT, text_align=TextAlign.MIDDLE,
+                          padding=50, rotation=45)
+
+text_topright = CustomText(name="text_topright", parent=text_topleft, font_size=22, position=Vector2(0, 0),
+                           font=font_path, align=Align.TOPRIGHT, text_align=TextAlign.MIDDLE,
+                           padding=50, rotation=45)
+
+text_bottomleft = CustomText(name="text_bottomleft", parent=text_topright, font_size=22, position=Vector2(0, 0),
+                             font=font_path, align=Align.BOTTOMLEFT, text_align=TextAlign.MIDDLE,
+                             padding=50, rotation=45)
+
+text_bottomright = CustomText(name="text_bottomright", parent=text_bottomleft, font_size=22, position=Vector2(0, 0),
+                              font=font_path, align=Align.BOTTOMRIGHT, text_align=TextAlign.MIDDLE,
+                              padding=50, rotation=45)
+
 screen.start()

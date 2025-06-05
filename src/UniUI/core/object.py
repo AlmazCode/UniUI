@@ -11,12 +11,12 @@ def import_screen_module() -> None:
     global Screen
     from .screen import Screen
 
-class Object:
+class BaseObject:
     def __init__(self, name: str, **args: dict[str, object]) -> None:
         # region vars
         self._name: str                     = name
-        self._parent: Object                = args.get("parent", None)
-        self.__children: list[Object]       = []
+        self._parent: BaseObject                = args.get("parent", None)
+        self.__children: list[BaseObject]       = []
         self._root_caller_info: CallerInfo = Console._get_root_caller_info()
 
         self._active: bool                  = args.get("active", True)
@@ -32,7 +32,7 @@ class Object:
         # endregion
 
         # region method call
-        if self._parent and isinstance(self._parent, Object):
+        if self._parent and isinstance(self._parent, BaseObject):
             self._parent.add_child(self)
         else:
             if Screen.Instance:
@@ -46,22 +46,22 @@ class Object:
     def __str__(self) -> str:
         return f"Object({self._name=}, {self._parent=})"
 
-    def __initialize_children(self, children: list['Object'] | None) -> None:
+    def __initialize_children(self, children: list['BaseObject'] | None) -> None:
         if children is None:
             return
         
         for child in children:
             self.add_child(child)
 
-    def add_child(self, child: 'Object', update_parent: bool = True) -> None:
-        if isinstance(child, Object) and (child not in self.__children or not update_parent):
+    def add_child(self, child: 'BaseObject', update_parent: bool = True) -> None:
+        if isinstance(child, BaseObject) and (child not in self.__children or not update_parent):
             if update_parent: child._parent = self
             self.__children.append(child)
         else:
             Console.error("add_child: child must be an Object")
 
-    def remove_child(self, child: 'Object', update_parent: bool = True) -> None:
-        if isinstance(child, Object):
+    def remove_child(self, child: 'BaseObject', update_parent: bool = True) -> None:
+        if isinstance(child, BaseObject):
             if update_parent: child._parent = None
             self.__children.remove(child)
         else:
@@ -83,41 +83,41 @@ class Object:
 
         match self._align:
             case Align.MIDDLE:
-                end.x = start._width // 2 - self.transform._width // 2
-                end.y = start._height // 2 - self.transform._height // 2
+                end.x = start._width // 2 - self._transform._width // 2
+                end.y = start._height // 2 - self._transform._height // 2
             case Align.LEFT:
                 end.x = 0
-                end.y = start._height // 2 - self.transform._height // 2
+                end.y = start._height // 2 - self._transform._height // 2
             case Align.RIGHT:
-                end.x = start._width - self.transform._width
-                end.y = start._height // 2 - self.transform._height // 2
+                end.x = start._width - self._transform._width
+                end.y = start._height // 2 - self._transform._height // 2
             case Align.TOP:
-                end.x = start._width // 2 - self.transform._width // 2
+                end.x = start._width // 2 - self._transform._width // 2
                 end.y = 0
             case Align.BOTTOM:
-                end.x = start._width // 2 - self.transform._width // 2
-                end.y = start._height - self.transform._height
+                end.x = start._width // 2 - self._transform._width // 2
+                end.y = start._height - self._transform._height
 
             case Align.TOPLEFT:
                 end.x = 0
                 end.y = 0
             case Align.TOPRIGHT:
-                end.x = start._width - self.transform._width
+                end.x = start._width - self._transform._width
                 end.y = 0
             
             case Align.BOTTOMLEFT:
                 end.x = 0
-                end.y = start._height - self.transform._height
+                end.y = start._height - self._transform._height
             case Align.BOTTOMRIGHT:
-                end.x = start._width - self.transform._width
-                end.y = start._height - self.transform._height
+                end.x = start._width - self._transform._width
+                end.y = start._height - self._transform._height
             
             case _:
                 Console.error("Invalid align value", True, self.__root_caller_info)
 
         return end
     
-    def get_root(self) -> 'Object':
+    def get_root(self) -> 'BaseObject':
         obj = self
         while obj.parent is not None:
             obj = obj.parent
@@ -137,7 +137,7 @@ class Object:
         return self._name
     
     @property
-    def parent(self) -> 'Object':
+    def parent(self) -> 'BaseObject':
         return self._parent
     
     @property
@@ -145,7 +145,7 @@ class Object:
         return self._active
 
     @property
-    def align(self) -> bool:
+    def align(self) -> Align:
         return self._align
 
 
@@ -175,7 +175,7 @@ class Object:
         if isinstance(value, Transform):
             self._transform = value
         else:
-            Console.error("The value can only be a transform")
+            Console.error(f"Expected value for 'transform', got {type(value).__name__}")
     
     @name.setter
     def name(self, value: str) -> None:
@@ -185,8 +185,8 @@ class Object:
         self._name = value
     
     @parent.setter
-    def parent(self, value: Union['Object', None]) -> None:
-        if isinstance(value, Object | None) and value not in self.__children:
+    def parent(self, value: Union['BaseObject', None]) -> None:
+        if isinstance(value, BaseObject | None) and value not in self.__children:
             if value is not None:
                 if self._parent is None:
                     Screen.Instance._remove_object(self)
@@ -198,7 +198,7 @@ class Object:
                 Screen.Instance._add_object(self)
                 self._parent.remove_child(self)
         else:
-            Console.error("Invalid parent value")
+            Console.error(f"Expected value for 'parent', got {type(value).__name__}")
     
     @active.setter
     def active(self, value: bool) -> None:
@@ -215,14 +215,14 @@ class Object:
             
             self._active = value
         else:
-            Console.error("Invalid active value")
+            Console.error(f"Expected bool for 'active', got {type(value).__name__}")
 
     @align.setter
     def align(self, value: Align) -> None:
         if isinstance(value, Align):
             self._align = value
         else:
-            Console.error("Invalid align value")
+            Console.error(f"Expected value for 'align', got {type(value).__name__}")
     #endregion
 
     def update(self) -> None:
