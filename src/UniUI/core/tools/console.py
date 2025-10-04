@@ -74,16 +74,16 @@ class Console:
     ) -> None:
         
         if print_extra_info:
-            info = Console._get_root_caller_info() if not custom_info else caller_info
+            info: CallerInfo = Console._get_root_caller_info() if not custom_info else caller_info
             print(
                 f"{color}UniUI {type} in " + 
                 f"{filename_color}\"{info.filename}\"{Color.Style.RESET if filename_color else ''}" + 
                 f", {color}line {lineno_color}{info.lineno}{Color.Style.RESET if lineno_color else ''}:" + 
                 f"\n  {code_context_color}{info.code_context}{Color.Style.RESET if code_context_color else ''}" + 
-                f"\n{color}{message}{Color.Style.RESET}"
+                f"\n{color}{message}{Color.Style.RESET}", flush = True
             )
         else:
-            print(f"[{Console._get_formatted_time()}] {color}UniUI : {message}{Color.Style.RESET}")
+            print(f"[{Console._get_formatted_time()}] {color}UniUI : {message}{Color.Style.RESET}", flush = True)
     
     @staticmethod
     def _get_root_caller_info() -> CallerInfo:
@@ -102,23 +102,7 @@ class Console:
 
         filename = target_frame.filename
         lineno = target_frame.lineno
-
-        source_lines = []
-        offset = 0
-        
-        while 1:
-            line = linecache.getline(filename, lineno + offset)
-            if not line:
-                break
-            source_lines.append(line)
-            try:
-                ast.parse("".join(source_lines))
-                break
-            except SyntaxError:
-                ...
-            offset += 1
-
-        code_context = "".join(source_lines).strip() if source_lines else None
+        code_context = target_frame.code_context[0].strip()
 
         return CallerInfo(filename, lineno, code_context)
 

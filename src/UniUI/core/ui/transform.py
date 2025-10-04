@@ -20,6 +20,7 @@ class Transform:
         self._rotation  = rotation if rotation is not None and isinstance(rotation, numbers.Real) else 0
         self._width     = width if width is not None and isinstance(width, float | int) else 0
         self._height    = height if height is not None and isinstance(height, float | int) else 0
+        self._size      = Vector2(self._width, self._height)
 
         self._on_property_changed = Event([on_property_changed_callback] if on_property_changed_callback is not None else [])
     
@@ -30,6 +31,10 @@ class Transform:
     @property
     def scale(self) -> Vector2:
         return self._scale
+    
+    @property
+    def size(self) -> Vector2:
+        return self._size
 
     @property
     def rotation(self) -> numbers.Real:
@@ -75,6 +80,7 @@ class Transform:
     def width(self, value: float | int) -> None:
         if isinstance(value, float | int):
             self._width = value
+            self._size = Vector2(self._width, self._height)
             self._on_property_changed.invoke()
         else:
             Console.error("The value can only be a float or an integer")
@@ -83,6 +89,7 @@ class Transform:
     def height(self, value: float | int) -> None:
         if isinstance(value, float | int):
             self._height = value
+            self._size = Vector2(self._width, self._height)
             self._on_property_changed.invoke()
         else:
             Console.error("The value can only be a float or an integer")

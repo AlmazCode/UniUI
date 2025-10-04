@@ -1,144 +1,97 @@
-import pygame
 import sys
-
-pygame.init()
+import pygame
 
 from typing import NoReturn
 
-from .object import BaseObject
 from .math.vector2 import Vector2
 from .tools.console import Console
-from .utils.system import get_refresh_rate
+from .utils import system
 from .time import Time
-from .ui.transform import Transform
-from . import settings
+
 
 class Screen:
 
+    Time = Time()
     Instance = None
-
-    def __init__(self,
-                 resolution: Vector2 = Vector2(480, 480), title: str = "UniUI Window", refresh_rate: int = -1,
-                 flags: int = 0) -> None:
-
+    
+    def __init__(self, 
+                 title: str = "UniUI Window",
+                 referense_resolution: Vector2 = Vector2(1920, 1080),
+                 resolution: Vector2 = Vector2(1920, 1080),
+                 refresh_rate: int = -1,
+                 pg_flags: int = 0,
+                 vsync: bool = True
+    ):
+        
         if Screen.Instance is None:
             Screen.Instance = self
         else:
             Console.error("Screen: the screen has already been created")
+        
+        self.title = title
+        self.referense_resolution = referense_resolution
+        self.resolution = resolution
+        self.pg_flags = pg_flags
+        self.vsync = vsync
 
-        self.__system_refresh_rate = get_refresh_rate()
-        self.title: str = title
-        self.transform: Transform = Transform(
-            None,
-            None,
-            None,
-            resolution.x if isinstance(resolution, Vector2) else 0,
-            resolution.y if isinstance(resolution, Vector2) else 0
-        )
-        self.flags: int = flags
-        self.__screen: pygame.Surface = None
-        self.__refresh_rate_object = pygame.time.Clock()
-        self.__refresh_rate = (
+        self._screen: pygame.Surface = None
+        self.__system_refresh_rate = system.get_refresh_rate()
+        self._refresh_rate_object = pygame.time.Clock()
+        self._refresh_rate = (
             refresh_rate if isinstance(refresh_rate, int) and refresh_rate != -1 
                         else self.__system_refresh_rate
         )
-        self.__fps = None
-        self.__objects: list[BaseObject] = []
-        self.__deactivated_objects: dict[BaseObject, int] = {}
-        self.__activated_objects: dict[BaseObject, int] = {}
-        self.__initialize()
-    
-    @property
-    def fps(self) -> float:
-        return self.__fps
-    
-    def __initialize(self) -> None:
-        if self.transform.wh == (0, 0):
+        self._fps: int = None
+
+        self.__scenes: dict[str, 'Scene'] = {}
+        self.__last_loaded_scene: 'Scene' = None
+
+        self.__initialize_screen()
+
+    def __initialize_screen(self) -> None:
+        if self.resolution.xy == (0, 0):
             info = pygame.display.Info()
-            self.transform.wh = (info.current_w, info.current_h)
-        self.__screen = pygame.display.set_mode(self.transform.wh, self.flags, vsync=1)
+            self.resolution.x = info.current_w
+            self.resolution.y = info.current_h
+        self._screen = pygame.display.set_mode(self.resolution.xy, self.pg_flags, vsync = self.vsync)
         pygame.display.set_caption(self.title)
 
-        Console.clear()
+        # Console.clear()
         Console.log("The screen has been successfully initialized")
+
+    @property
+    def fps(self) -> int:
+        return self._fps
     
-    def _add_object(self, object: BaseObject) -> None:
-        if isinstance(object, BaseObject):
-            self.__objects.append(object)
-        else:
-            Console.error("This object does not belong to the Object type")
+    def add_scene(self, scene: 'Scene') -> None:
+        if scene is not None and scene.name not in self.__scenes:
+            self.__scenes[scene.name] = scene
     
-    def _remove_object(self, object: BaseObject) -> None:
-        if isinstance(object, BaseObject):
-            self.__objects.remove(object)
-        else:
-            Console.error("This object does not belong to the Object type")
-        
-    def _activate_object(self, object: BaseObject, mode: int) -> None:
-        if isinstance(object, BaseObject):
-            self.__activated_objects[object] = mode
-            if self.__deactivated_objects.get(object, None):
-                self.__deactivated_objects.pop(object)
-        else:
-            Console.error("This object does not belong to the Object type")
+    def load_scene(self, name: str) -> None:
+
+        from .scene import Scene
+        if isinstance(self.__last_loaded_scene, Scene):
+            self.__last_loaded_scene._active = False
+
+        if name in self.__scenes:
+            self.__scenes[name].start()
     
-    def _deactivate_object(self, object: BaseObject, mode: int) -> None:
-        if isinstance(object, BaseObject):
-            self.__deactivated_objects[object] = mode
-            if self.__activated_objects.get(object, None):
-                self.__activated_objects.pop(object)
-        else:
-            Console.error("This object does not belong to the Object type")
+    def load_scene(self, scene: 'Scene') -> None:
+
+        from .scene import Scene
+        if isinstance(self.__last_loaded_scene, Scene):
+            self.__last_loaded_scene._active = False
+
+        if scene.name in self.__scenes:
+            self.__scenes[scene.name].start()
     
-    def quit(self) -> NoReturn:
+    def get_scene_by_name(self, name: str) -> 'Scene':
+        if name in self.__scenes:
+            return self.__scenes[name]
+        return None
+    
+    @staticmethod
+    def quit() -> NoReturn:
         Console.log("The program has completed its work")
         pygame.quit()
         sys.exit(0)
-    
-    def start(self) -> None:
-        
-        while 1:
-            self.__screen.fill(0)
-            Time._update_delta_time(self.__refresh_rate_object.tick(self.__refresh_rate) / 1000)
-            self.__fps = int(self.__refresh_rate_object.get_fps())
-
-            events: list[pygame.event.Event] = pygame.event.get()
-
-            # events handle
-            for event in events:
-                if event.type == pygame.QUIT:
-                    self.quit()
-            
-            # updating
-            for object in self.__objects:
-                object.update()
-            
-            # if settings.DEBUG_APP:
-            #     Console.log(f"{len(self.__objects)} objects have been updated")
-            
-            # activating objects
-            if self.__activated_objects:
-                while len(self.__activated_objects) > 0:
-                    (object, mode) = self.__activated_objects.popitem()
-                    if mode == 1:
-                        self._add_object(object)
-                    else:
-                        object._parent.add_child(object, False)
-            
-            # deactivating objects
-            if self.__deactivated_objects:
-                while len(self.__deactivated_objects) > 0:
-                    (object, mode) = self.__deactivated_objects.popitem()
-                    if mode == 1:
-                        self._remove_object(object)
-                    else:
-                        object._parent.remove_child(object, False)
-            
-            # drawing
-            for object in self.__objects:
-                object.draw(self.__screen)
-            
-            # if settings.DEBUG_APP:
-            #     Console.log(f"{len(self.__objects)} objects have been drawed\n{"-"*42}")
-            
-            pygame.display.update()

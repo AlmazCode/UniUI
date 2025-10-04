@@ -1,70 +1,68 @@
 import pygame
-import UniUI
-from UniUI import Screen, Vector2, Text, Time, Align, TextAlign,BaseObject
+from UniUI import Screen, Scene, Vector2, Text, Align, TextAlign
 from pathlib import Path
 
-screen = Screen(resolution = Vector2(1280, 720), title = "Test App", flags = pygame.DOUBLEBUF)
-UniUI.settings.DEBUG_APP = True
+screen = Screen(resolution = Vector2(1280, 720), title = "Test App", pg_flags = pygame.DOUBLEBUF)
+main = Scene("main")
 
 font_path = Path(__file__).parent / "assets" / "FiraCode-Regular.ttf"
 
 class CustomText(Text):
-    def __init__(self, *, name: str, **args) -> None:
-        super().__init__(name, **args)
+    def __init__(self, *, name: str, scene: str, **args) -> None:
+        super().__init__(name, scene, **args)
 
         self.transform.width = 200
         self.transform.height = 200
     
     def update(self) -> None:
         super().update()
-        self.text = f"FPS: {screen.fps}\nHello, World!\nline №3"
-        self.transform.rotation += 100 * Time.delta_time
+        self.text = f"FPS: {Screen.Instance.fps}\nHello, World!\nline №3"
+        self.transform.rotation += 100 * Screen.Time.delta_time
+        self.transform.position.x += 1
 
-text_middle = CustomText(name="text_middle", font_size=22, position=Vector2(0, 0),
+text_middle = CustomText(name="text_middle", scene="main", font_size=22, position=Vector2(0, 0),
                          font=font_path, align=Align.MIDDLE, text_align=TextAlign.MIDDLE,
-                         padding=50, rotation=45)
+                         padding=50, rotation=0)
 
-text_left = CustomText(name="text_left", parent=text_middle, font_size=22, position=Vector2(0, 0),
+text_left = Text(name="text_left", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                        font=font_path, align=Align.LEFT, text_align=TextAlign.MIDDLE,
-                       padding=50, rotation=45)
+                       padding=50, rotation=0)
 
-text_right = CustomText(name="text_right", parent=text_left, font_size=22, position=Vector2(0, 0),
+text_right = Text(name="text_right", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                         font=font_path, align=Align.RIGHT, text_align=TextAlign.MIDDLE,
-                        padding=50, rotation=45)
+                        padding=50, rotation=0)
 
-
-text_top = CustomText(name="text_top", parent=text_right, font_size=22, position=Vector2(0, 0),
+text_top = Text(name="text_top", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                       font=font_path, align=Align.TOP, text_align=TextAlign.MIDDLE,
-                      padding=50, rotation=45)
+                      padding=50, rotation=0)
 
-text_bottom = CustomText(name="text_bottom", parent=text_top, font_size=22, position=Vector2(0, 0),
+text_bottom = Text(name="text_bottom", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                          font=font_path, align=Align.BOTTOM, text_align=TextAlign.MIDDLE,
-                         padding=50, rotation=45)
+                         padding=50, rotation=0)
 
-text_topleft = CustomText(name="text_topleft", parent=text_bottom, font_size=22, position=Vector2(0, 0),
+text_topleft = Text(name="text_topleft", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                           font=font_path, align=Align.TOPLEFT, text_align=TextAlign.MIDDLE,
-                          padding=50, rotation=45)
+                          padding=50, rotation=0)
 
-text_topright = CustomText(name="text_topright", parent=text_topleft, font_size=22, position=Vector2(0, 0),
+text_topright = Text(name="text_topright", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                            font=font_path, align=Align.TOPRIGHT, text_align=TextAlign.MIDDLE,
-                           padding=50, rotation=45)
+                           padding=50, rotation=0)
 
-text_bottomleft = CustomText(name="text_bottomleft", parent=text_topright, font_size=22, position=Vector2(0, 0),
+text_bottomleft = Text(name="text_bottomleft", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                              font=font_path, align=Align.BOTTOMLEFT, text_align=TextAlign.MIDDLE,
-                             padding=50, rotation=45)
+                             padding=50, rotation=0)
 
-text_bottomright = CustomText(name="text_bottomright", parent=text_bottomleft, font_size=22, position=Vector2(0, 0),
+text_bottomright = Text(name="text_bottomright", scene="main", parent=text_middle, font_size=22, position=Vector2(0, 0),
                               font=font_path, align=Align.BOTTOMRIGHT, text_align=TextAlign.MIDDLE,
-                              padding=50, rotation=45)
+                              padding=50, rotation=0)
 
-class Manager(BaseObject):
-    def __init__(self, *, name: str, **args) -> None:
-        super().__init__(name, **args)
+# class Manager(BaseObject):
+#     def __init__(self, *, name: str, scene: str, **args) -> None:
+#         super().__init__(name, scene, **args)
     
-    def update(self):
-        super().update()
-        text_middle.transform.scale -= 0.1 * Time.delta_time
+#     def update(self):
+#         super().update()
 
-manager = Manager(name = "Manager")
+# manager = Manager(name = "Manager", scene="main")
 
-screen.start()
+screen.load_scene(main)

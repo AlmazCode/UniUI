@@ -4,6 +4,7 @@ import math
 from ..tools.console import Console
 
 class Vector2:
+
     def __init__(self, x: numbers.Real, y: numbers.Real) -> None:
         self._x = x if isinstance(x, numbers.Real) else 0.0
         self._y = y if isinstance(y, numbers.Real) else 0.0
@@ -78,3 +79,6 @@ class Vector2:
         if mag == 0:
             return Vector2(0, 0)
         return self / mag
+
+zero_vector = Vector2(0, 0)
+unit_vector = Vector2(1, 1)

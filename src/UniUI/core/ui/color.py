@@ -1,6 +1,7 @@
 from ..tools.console import Console
 
 class Color:
+
     def __init__(self, r: int = 255, g: int = 255, b: int = 255, a: int = 255) -> None:
         self._r = self._clamp(r)
         self._g = self._clamp(g)
