@@ -43,9 +43,6 @@ class Screen:
         )
         self._fps: int = None
 
-        self.__scenes: dict[str, 'Scene'] = {}
-        self.__last_loaded_scene: 'Scene' = None
-
         self.__initialize_screen()
 
     def __initialize_screen(self) -> None:
@@ -56,39 +53,12 @@ class Screen:
         self._screen = pygame.display.set_mode(self.resolution.xy, self.pg_flags, vsync = self.vsync)
         pygame.display.set_caption(self.title)
 
-        # Console.clear()
+        Console.clear()
         Console.log("The screen has been successfully initialized")
 
     @property
     def fps(self) -> int:
         return self._fps
-    
-    def add_scene(self, scene: 'Scene') -> None:
-        if scene is not None and scene.name not in self.__scenes:
-            self.__scenes[scene.name] = scene
-    
-    def load_scene(self, name: str) -> None:
-
-        from .scene import Scene
-        if isinstance(self.__last_loaded_scene, Scene):
-            self.__last_loaded_scene._active = False
-
-        if name in self.__scenes:
-            self.__scenes[name].start()
-    
-    def load_scene(self, scene: 'Scene') -> None:
-
-        from .scene import Scene
-        if isinstance(self.__last_loaded_scene, Scene):
-            self.__last_loaded_scene._active = False
-
-        if scene.name in self.__scenes:
-            self.__scenes[scene.name].start()
-    
-    def get_scene_by_name(self, name: str) -> 'Scene':
-        if name in self.__scenes:
-            return self.__scenes[name]
-        return None
     
     @staticmethod
     def quit() -> NoReturn:

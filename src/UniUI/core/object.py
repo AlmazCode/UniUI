@@ -7,36 +7,37 @@ from .ui.transform import Transform
 from .screen import Screen
 
 from typing import Union
+from collections import defaultdict
 
 
 class BaseObject:
     
-    def __init__(self, name: str, scene: str, **args: dict[str, object]) -> None:
+    def __init__(self, name: str, scene: 'Scene', **kwargs: dict[str, object]) -> None:
 
         # ======
         self._name: str                     = name
         self._scene: str                    = scene
-        self._parent: BaseObject            = args.get("parent", None)
+        self._parent: BaseObject            = kwargs.get("parent", None)
         self.__children: list[BaseObject]   = []
         self.__sorted_children: dict[int, list[BaseObject]] = {}
         self._root_caller_info: CallerInfo  = Console._get_root_caller_info()
 
-        self._active: bool                  = args.get("active", True)
+        self._active: bool                  = kwargs.get("active", True)
 
         self._transform                     = Transform(
-            args.get("position", zero_vector),
-            args.get("scale", unit_vector),
-            args.get("rotation", 0),
-            args.get("width", 0),
-            args.get("height", 0)
+            kwargs.get("position", zero_vector),
+            kwargs.get("scale", unit_vector),
+            kwargs.get("rotation", 0),
+            kwargs.get("width", 0),
+            kwargs.get("height", 0)
         )
-        self._align: Align                  = args.get("align", Align.MIDDLE)
-        self._layer: int                    = args.get("layer", 0)
+        self._align: Align                  = kwargs.get("align", Align.MIDDLE)
+        self._layer: int                    = kwargs.get("layer", 0)
         # ======
 
         self._transform._on_property_changed.add_listener(self._on_transform_property_changed)
 
-        self.__scene = Screen.Instance.get_scene_by_name(scene)
+        self.__scene = scene
 
         if self._parent and isinstance(self._parent, BaseObject):
             self._parent.add_child(self)
@@ -46,7 +47,7 @@ class BaseObject:
             else:
                 raise Exception("Create a scene to create objects")
             
-        self.__initialize_children(args.get("children", None))
+        self.__initialize_children(kwargs.get("children", None))
     
     def __str__(self) -> str:
         return f"Object({self._name=}, {self._parent=})"
@@ -56,7 +57,9 @@ class BaseObject:
             return
         
         for child in children:
-            self.add_child(child)
+            self.add_child(child, resort_objects=False)
+        
+        self._sort_children()
     
     def _get_align_offset_root(self, container_size: Vector2) -> Vector2:
         """
@@ -153,13 +156,11 @@ class BaseObject:
             return self._get_align_offset_child(parent_size)
 
     def _sort_children(self) -> None:
-        self.__sorted_children.clear()
+        layers_dict = defaultdict(list)
+        for obj in self.__children:
+            layers_dict[obj.layer].append(obj)
 
-        for object in self.__children:
-            if object._layer not in self.__sorted_children:
-                self.__sorted_children[object._layer] = [object]
-            else:
-                self.__sorted_children[object._layer].append(object)
+        self.__sorted_children = dict(sorted(layers_dict.items()))
     
     def _on_transform_property_changed(self):
         for child in self.__children:
@@ -280,10 +281,23 @@ class BaseObject:
     @layer.setter
     def layer(self, value: int) -> None:
         if isinstance(value, int):
-            self._layer = value
+            if value != self._layer:
+                self._layer = value
+                if self._parent is not None:
+                    self._parent._sort_children()
+                else:
+                    self.__scene._sort_objects()
         else:
             Console.error(f"Expected value for 'layer', got {type(value).__name__}")
     #endregion
+
+    def destroy(self) -> None:
+        for obj in self.__children:
+            obj.destroy()
+
+        del self.__children
+        del self.__sorted_children
+        del self
 
     def get_root(self) -> 'BaseObject':
         obj = self
@@ -291,10 +305,12 @@ class BaseObject:
             obj = obj.parent
         return obj
 
-    def add_child(self, child: 'BaseObject', update_parent: bool = True) -> None:
+    def add_child(self, child: 'BaseObject', update_parent: bool = True, resort_objects: bool = True) -> None:
         if isinstance(child, BaseObject) and (child not in self.__children or not update_parent):
             if update_parent: child._parent = self
             self.__children.append(child)
+            if resort_objects:
+                self._sort_children()
         else:
             Console.error("add_child: child must be an Object")
 
@@ -302,15 +318,16 @@ class BaseObject:
         if isinstance(child, BaseObject):
             if update_parent: child._parent = None
             self.__children.remove(child)
+            self._sort_children()
         else:
             Console.error("remove_child: child must be an Object")
 
     def update(self) -> None:
-        for child in self.__children:
-            if child.active:
-                child.update()
+        for layer in self.__sorted_children:
+            for obj in self.__sorted_children[layer]:
+                obj.update()
 
     def draw(self, surface: pygame.Surface) -> None:
-        for child in self.__children:
-            if child.active:
-                child.draw(surface)
+        for layer in self.__sorted_children:
+            for obj in self.__sorted_children[layer]:
+                obj.draw(surface)

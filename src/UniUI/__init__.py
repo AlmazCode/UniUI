@@ -1,4 +1,5 @@
 from .core.math.vector2 import Vector2
+from .core.sceneManager import SceneManager
 from .core.object import BaseObject
 from .core.scene import Scene
 from .core.screen import Screen

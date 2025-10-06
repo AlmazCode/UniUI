@@ -5,14 +5,15 @@ from .tools.console import Console
 from .time import Time
 from .screen import Screen
 
+from collections import defaultdict
+from typing import Callable
+
 pygame.init()
 
 
 class Scene:
 
-    # Instance = None
-
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, init_func: Callable[['Scene'], None]) -> None:
 
         self.name = name
 
@@ -22,19 +23,21 @@ class Scene:
         self.__sorted_objects: dict[int, list[BaseObject]] = {}
         self.__deactivated_objects: dict[BaseObject, int] = {}
         self.__activated_objects: dict[BaseObject, int] = {}
-
-        Screen.Instance.add_scene(self)
+        self.__init_func = init_func
+        self._is_loaded = False
 
     
     def _add_object(self, object: BaseObject) -> None:
         if isinstance(object, BaseObject):
             self.__objects.append(object)
+            self._sort_objects()
         else:
             Console.error("This object does not belong to the Object type")
     
     def _remove_object(self, object: BaseObject) -> None:
         if isinstance(object, BaseObject):
             self.__objects.remove(object)
+            self._sort_objects()
         else:
             Console.error("This object does not belong to the Object type")
         
@@ -55,13 +58,27 @@ class Scene:
             Console.error("This object does not belong to the Object type")
     
     def _sort_objects(self) -> None:
-        self.__sorted_objects.clear()
+        layers_dict = defaultdict(list)
+        for obj in self.__objects:
+            layers_dict[obj.layer].append(obj)
 
-        for object in self.__objects:
-            if object._layer not in self.__sorted_objects:
-                self.__sorted_objects[object._layer] = [object]
-            else:
-                self.__sorted_objects[object._layer].append(object)
+        self.__sorted_objects = dict(sorted(layers_dict.items()))
+    
+    def load(self):
+        self.__init_func(self)
+        self._is_loaded = True
+        self.start()
+
+    def unload(self):
+        self._is_loaded = False
+        
+        for obj in self.__objects:
+            obj.destroy()
+
+        self.__objects.clear()
+        self.__sorted_objects.clear()
+        self.__activated_objects.clear()
+        self.__deactivated_objects.clear()
     
     def start(self) -> None:
 
@@ -80,8 +97,9 @@ class Scene:
                     Screen.quit()
             
             # updating
-            for object in self.__objects:
-                object.update()
+            for layer in self.__sorted_objects:
+                for obj in self.__sorted_objects[layer]:
+                    obj.update()
             
             # if settings.DEBUG_APP:
             #     Console.log(f"{len(self.__objects)} objects have been updated")
@@ -105,8 +123,9 @@ class Scene:
                         object._parent.remove_child(object, False)
             
             # drawing
-            for object in self.__objects:
-                object.draw(Screen.Instance._screen)
+            for layer in self.__sorted_objects:
+                for obj in self.__sorted_objects[layer]:
+                    obj.draw(Screen.Instance._screen)
             
             # if settings.DEBUG_APP:
             #     Console.log(f"{len(self.__objects)} objects have been drawed\n{"-"*42}")
