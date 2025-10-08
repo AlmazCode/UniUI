@@ -1,5 +1,5 @@
 import pygame
-from UniUI import Screen, Scene, Vector2, Text, Align, TextAlign, SceneManager
+from UniUI import Screen, Scene, Vector2, Text, Align, TextAlign, TextAlignX, TextAlignY, SceneManager
 from pathlib import Path
 
 screen = Screen(resolution = Vector2(1280, 720), title = "Test App", pg_flags = pygame.DOUBLEBUF)
@@ -24,9 +24,17 @@ class CustomText(Text):
 
 @manager.scene("main")
 def main(scene: Scene) -> None:
-    text_middle = CustomText(name="text_middle", scene=scene, font_size=22, position=Vector2(0, 0),
-                            font=font_path, align=Align.MIDDLE, text_align=TextAlign.MIDDLE,
-                            padding=0, rotation=0)
+    text_middle = CustomText(
+        name="text_middle",
+        scene=scene,
+        font_size=22,
+        position=Vector2(0, 0),
+        font=font_path,
+        align=Align.MIDDLE,
+        text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
+        padding=0,
+        rotation=0
+    )
     return
     text_left = Text(name="text_left", scene=scene, parent=text_middle, font_size=22, position=Vector2(0, 0),
                         font=font_path, align=Align.LEFT, text_align=TextAlign.MIDDLE,

@@ -4,7 +4,7 @@ import numbers
 from ..object import BaseObject
 from ..math.vector2 import Vector2
 from ..ui.color import Color
-from ..ui.align import TextAlign, Align
+from ..ui.align import TextAlign, Align, TextAlignX, TextAlignY
 from ..tools.console import Console
 
 DEFAULT_FONT = "Arial"
@@ -17,7 +17,7 @@ class Text(BaseObject):
         self._color: Color = args.get("color", Color())
         self._font_path: str | None = args.get("font", None)
         self._font_size: int = args.get("font_size", 16)
-        self._text_align: TextAlign = args.get("text_align", TextAlign.LEFT)
+        self._text_align: TextAlign = args.get("text_align", TextAlign())
         
         padding = args.get("padding", 0)
         self._padding: float = padding if isinstance(padding, numbers.Real) else 0
@@ -143,15 +143,14 @@ class Text(BaseObject):
     def __update_surface(self) -> None:
         global_scale = self.global_scale
         rendered_lines, width, height = self.__render_lines()
-        #width, height = (width * global_scale.x, height * global_scale.y)
         surface = pygame.Surface((width, height), pygame.SRCALPHA)
 
         y = 0
         for surf in rendered_lines:
             surf_width, surf_height = rendered_lines[surf]
-            if self._text_align == TextAlign.RIGHT:
+            if self._text_align.x == TextAlignX.RIGHT:
                 x = width - surf_width
-            elif self._text_align == TextAlign.MIDDLE:
+            elif self._text_align.x == TextAlignX.MIDDLE:
                 x = (width - surf_width) // 2
             else:
                 x = 0
@@ -187,29 +186,21 @@ class Text(BaseObject):
         Calculates the offset for text alignment.
         """
         
-        match self._align:
-            case Align.RIGHT:
+        match self._text_align.x:
+            case TextAlignX.RIGHT:
                 pos.x += self._transform._width - self._preffered_size.x
-                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
-            case Align.LEFT:
-                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
-            case Align.MIDDLE:
-                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
-                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
-            case Align.TOP:
-                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
-            case Align.BOTTOM:
-                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
-                pos.y += self._transform._height - self._preffered_size.y
-            case Align.TOPLEFT:
+            case TextAlignX.LEFT:
                 ...
-            case Align.TOPRIGHT:
-                pos.x += self._transform._width - self._preffered_size.x
-            case Align.BOTTOMLEFT:
+            case TextAlignX.MIDDLE:
+                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
+        
+        match self._text_align.y:
+            case TextAlignY.BOTTOM:
                 pos.y += self._transform._height - self._preffered_size.y
-            case Align.BOTTOMRIGHT:
-                pos.x += self._transform._width - self._preffered_size.x
-                pos.y += self._transform._height - self._preffered_size.y
+            case TextAlignY.TOP:
+                ...
+            case TextAlignY.MIDDLE:
+                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
 
         return pos
 

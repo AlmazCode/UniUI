@@ -14,7 +14,19 @@ class Align(Enum):
     BOTTOMLEFT      = 8
     BOTTOMRIGHT     = 9
 
-class TextAlign(Enum):
-    MIDDLE          = 1
-    LEFT            = 2
-    RIGHT           = 3
+class TextAlignX:
+
+    MIDDLE  = 1
+    LEFT    = 2
+    RIGHT   = 3
+
+class TextAlignY:
+
+    MIDDLE  = 1
+    TOP     = 2
+    BOTTOM  = 3
+
+class TextAlign:
+    def __init__(self, x: TextAlignX = TextAlignX.MIDDLE, y: TextAlignY = TextAlignY.MIDDLE) -> None:
+        self.x = x
+        self.y = y
