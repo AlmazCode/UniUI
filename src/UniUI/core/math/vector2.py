@@ -1,13 +1,17 @@
 import numbers
 import math
 
+from typing import Callable
+
 from ..tools.console import Console
+from ..utils.event import Event
 
 class Vector2:
 
-    def __init__(self, x: numbers.Real, y: numbers.Real) -> None:
+    def __init__(self, x: numbers.Real, y: numbers.Real, on_changed: Event = None) -> None:
         self._x = x if isinstance(x, numbers.Real) else 0.0
         self._y = y if isinstance(y, numbers.Real) else 0.0
+        self._on_changed = on_changed if isinstance(on_changed, Event) else Event([])
 
     def __add__(self, other) -> 'Vector2':
         if isinstance(other, Vector2):
@@ -57,6 +61,8 @@ class Vector2:
     def x(self, value: numbers.Real) -> None:
         if isinstance(value, numbers.Real):
             self._x = value
+            if isinstance(self._on_changed, Event):
+                self._on_changed.invoke()
 
     @property
     def y(self) -> float:
@@ -66,6 +72,8 @@ class Vector2:
     def y(self, value: numbers.Real) -> None:
         if isinstance(value, numbers.Real):
             self._y = value
+            if isinstance(self._on_changed, Event):
+                self._on_changed.invoke()
 
     @property
     def xy(self) -> tuple[float, float]:

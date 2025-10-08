@@ -9,6 +9,7 @@ from .screen import Screen
 from typing import Union
 from collections import defaultdict
 
+DEFAULT_SIZE = Vector2(100, 100)
 
 class BaseObject:
     
@@ -28,14 +29,13 @@ class BaseObject:
             kwargs.get("position", zero_vector),
             kwargs.get("scale", unit_vector),
             kwargs.get("rotation", 0),
-            kwargs.get("width", 0),
-            kwargs.get("height", 0)
+            kwargs.get("width", DEFAULT_SIZE.x),
+            kwargs.get("height", DEFAULT_SIZE.y),
+            self._on_transform_property_changed
         )
         self._align: Align                  = kwargs.get("align", Align.MIDDLE)
         self._layer: int                    = kwargs.get("layer", 0)
         # ======
-
-        self._transform._on_property_changed.add_listener(self._on_transform_property_changed)
 
         self.__scene = scene
 

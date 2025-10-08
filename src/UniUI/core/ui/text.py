@@ -4,7 +4,7 @@ import numbers
 from ..object import BaseObject
 from ..math.vector2 import Vector2
 from ..ui.color import Color
-from ..ui.align import TextAlign
+from ..ui.align import TextAlign, Align
 from ..tools.console import Console
 
 DEFAULT_FONT = "Arial"
@@ -125,6 +125,7 @@ class Text(BaseObject):
 
     def __render_lines(self) -> tuple[dict[pygame.Surface, tuple[int, int]], int, int]:
         lines = self._text.split("\n")
+        lenght = len(lines)
         rendered_lines: dict[pygame.Surface, tuple[int, int]] = {}
         width = height = 0
 
@@ -135,58 +136,87 @@ class Text(BaseObject):
             height += size[1]
             width = max(width, size[0])
 
-        height += self._padding * (len(lines) - 1)
+        height += self._padding * (lenght - 1)
 
         return rendered_lines, width, height
 
     def __update_surface(self) -> None:
+        global_scale = self.global_scale
         rendered_lines, width, height = self.__render_lines()
+        #width, height = (width * global_scale.x, height * global_scale.y)
         surface = pygame.Surface((width, height), pygame.SRCALPHA)
-        x = y = 0
+
+        y = 0
         for surf in rendered_lines:
-            match self._text_align:
-                case TextAlign.MIDDLE:
-                    x = width // 2 - rendered_lines[surf][0] // 2
-                case TextAlign.RIGHT:
-                    x = height - rendered_lines[surf][0]
-                case _:
-                    x = 0
+            surf_width, surf_height = rendered_lines[surf]
+            if self._text_align == TextAlign.RIGHT:
+                x = width - surf_width
+            elif self._text_align == TextAlign.MIDDLE:
+                x = (width - surf_width) // 2
+            else:
+                x = 0
 
             surface.blit(surf, (x, y))
-            y += rendered_lines[surf][1] + self._padding
-
-        pygame.draw.rect(surface, (255, 0, 0), surface.get_rect(), 1)  # Debug border
-        pygame.draw.line(surface, (255, 0, 0), (0, height//2), (width, height//2))
-        pygame.draw.line(surface, (255, 0, 0), (width//2, 0), (width//2, height))
+            y += surf_height + self._padding
 
         # Apply rotation
         global_rotation = self.global_rotation
         if global_rotation != 0:
             surface = pygame.transform.rotozoom(surface, global_rotation, 1)
             width, height = surface.get_size()
-        
+
         # Apply scaling
-        global_scale = self.global_scale
-        if global_scale.x != 1 and global_scale.y != 1:
+        if global_scale.x != 1 or global_scale.y != 1:
             new_size = (Vector2(width, height) * global_scale).xy
             surface = pygame.transform.smoothscale(surface, (max(0, new_size[0]), max(0, new_size[1])))
             width, height = surface.get_size()
-        
+
+        pygame.draw.rect(surface, (255, 0, 0), surface.get_rect(), 1)  # Debug border
+        pygame.draw.line(surface, (255, 0, 0), (0, height // 2), (width, height // 2))
+        pygame.draw.line(surface, (255, 0, 0), (width // 2, 0), (width // 2, height))
+
         self._preffered_size = Vector2(width, height)
         self.__surface = surface
     
     def _on_transform_property_changed(self):
         self.__update_surface()
         super()._on_transform_property_changed()
+    
+    def _get_text_align_offset(self, pos: Vector2) -> Vector2:
+        """
+        Calculates the offset for text alignment.
+        """
+        
+        match self._align:
+            case Align.RIGHT:
+                pos.x += self._transform._width - self._preffered_size.x
+                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
+            case Align.LEFT:
+                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
+            case Align.MIDDLE:
+                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
+                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
+            case Align.TOP:
+                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
+            case Align.BOTTOM:
+                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
+                pos.y += self._transform._height - self._preffered_size.y
+            case Align.TOPLEFT:
+                ...
+            case Align.TOPRIGHT:
+                pos.x += self._transform._width - self._preffered_size.x
+            case Align.BOTTOMLEFT:
+                pos.y += self._transform._height - self._preffered_size.y
+            case Align.BOTTOMRIGHT:
+                pos.x += self._transform._width - self._preffered_size.x
+                pos.y += self._transform._height - self._preffered_size.y
+
+        return pos
 
     # === Public Methods ===
     
     def get_render_position(self) -> Vector2:
-        pos = self.global_position
-        pos.x += self._transform._width // 2 - self._preffered_size.x // 2
-        pos.y += self._transform._height // 2 - self._preffered_size.y // 2
-        # pos += self.global_position
-        return pos
+        return self._get_text_align_offset(self.global_position)
 
     # === Pygame Hooks ===
 

@@ -12,17 +12,18 @@ class Transform:
                  rotation: Vector2 = None,
                  width: float = None,
                  height: float = None,
-                 on_property_changed_callback: Callable = None
+                 on_property_changed_callback: Callable[[], None] = None
     ) -> None:
         
+        self._on_property_changed = Event([on_property_changed_callback] if on_property_changed_callback is not None else [])
+
         self._position  = position if position is not None and isinstance(position, Vector2) else Vector2(0, 0)
-        self._scale     = scale if scale is not None and isinstance(scale, Vector2) else Vector2(1, 1)
+        self._scale     = Vector2(scale._x, scale._y, self._on_property_changed) \
+            if scale is not None and isinstance(scale, Vector2) else Vector2(1, 1, self._on_property_changed)
         self._rotation  = rotation if rotation is not None and isinstance(rotation, numbers.Real) else 0
         self._width     = width if width is not None and isinstance(width, float | int) else 0
         self._height    = height if height is not None and isinstance(height, float | int) else 0
         self._size      = Vector2(self._width, self._height)
-
-        self._on_property_changed = Event([on_property_changed_callback] if on_property_changed_callback is not None else [])
     
     @property
     def position(self) -> Vector2:

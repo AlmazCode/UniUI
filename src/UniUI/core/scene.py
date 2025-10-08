@@ -17,14 +17,12 @@ class Scene:
 
         self.name = name
 
-        self._active = False
-
+        self._is_loaded = False
         self.__objects: list[BaseObject] = []
         self.__sorted_objects: dict[int, list[BaseObject]] = {}
         self.__deactivated_objects: dict[BaseObject, int] = {}
         self.__activated_objects: dict[BaseObject, int] = {}
         self.__init_func = init_func
-        self._is_loaded = False
 
     
     def _add_object(self, object: BaseObject) -> None:
@@ -80,11 +78,8 @@ class Scene:
         self.__activated_objects.clear()
         self.__deactivated_objects.clear()
     
-    def start(self) -> None:
-
-        self._active = True
-        
-        while self._active:
+    def start(self) -> None:        
+        while self._is_loaded:
             Screen.Instance._screen.fill(0)
             Time._update_delta_time(Screen.Instance._refresh_rate_object.tick(Screen.Instance._refresh_rate) / 1000)
             Screen.Instance._fps = int(Screen.Instance._refresh_rate_object.get_fps())

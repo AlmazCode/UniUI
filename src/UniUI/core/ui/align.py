@@ -15,6 +15,6 @@ class Align(Enum):
     BOTTOMRIGHT     = 9
 
 class TextAlign(Enum):
-    MIDDLE  = 1
-    LEFT    = 2
-    RIGHT   = 3
+    MIDDLE          = 1
+    LEFT            = 2
+    RIGHT           = 3

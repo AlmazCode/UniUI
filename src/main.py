@@ -17,15 +17,17 @@ class CustomText(Text):
     def update(self) -> None:
         super().update()
         self.text = f"FPS: {Screen.Instance.fps}\nHello, World!\nline №3"
-        self.transform.rotation += 100 * Screen.Time.delta_time
-        self.transform.position.x += 1
+        # self.transform.width += 1
+        # self.transform.rotation += 100 * Screen.Time.delta_time
+        self.transform.scale.x += 0.005
+        self.transform.scale.y += 0.005
 
 @manager.scene("main")
 def main(scene: Scene) -> None:
     text_middle = CustomText(name="text_middle", scene=scene, font_size=22, position=Vector2(0, 0),
                             font=font_path, align=Align.MIDDLE, text_align=TextAlign.MIDDLE,
-                            padding=50, rotation=0)
-
+                            padding=0, rotation=0)
+    return
     text_left = Text(name="text_left", scene=scene, parent=text_middle, font_size=22, position=Vector2(0, 0),
                         font=font_path, align=Align.LEFT, text_align=TextAlign.MIDDLE,
                         padding=50, rotation=0)
