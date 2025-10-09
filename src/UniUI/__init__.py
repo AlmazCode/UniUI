@@ -1,3 +1,6 @@
+import pygame
+pygame.init()
+
 from .core.math.vector2 import Vector2
 from .core.sceneManager import SceneManager
 from .core.object import BaseObject

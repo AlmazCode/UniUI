@@ -15,6 +15,9 @@ class BaseObject:
     
     def __init__(self, name: str, scene: 'Scene', **kwargs: dict[str, object]) -> None:
 
+        global Scene
+        from .scene import Scene
+
         # ======
         self._name: str                     = name
         self._scene: str                    = scene
@@ -31,13 +34,13 @@ class BaseObject:
             kwargs.get("rotation", 0),
             kwargs.get("width", DEFAULT_SIZE.x),
             kwargs.get("height", DEFAULT_SIZE.y),
-            self._on_transform_property_changed
+            self._refurbish_interior
         )
         self._align: Align                  = kwargs.get("align", Align.MIDDLE)
         self._layer: int                    = kwargs.get("layer", 0)
         # ======
 
-        self.__scene = scene
+        self.__scene: Scene = scene
 
         if self._parent and isinstance(self._parent, BaseObject):
             self._parent.add_child(self)
@@ -70,32 +73,32 @@ class BaseObject:
         
         match self._align:
             case Align.MIDDLE:
-                offset.x = container_size.x // 2 - self._transform._width // 2
-                offset.y = container_size.y // 2 - self._transform._height // 2
+                offset.x = container_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
+                offset.y = container_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
             case Align.LEFT:
                 offset.x = 0
-                offset.y = container_size.y // 2 - self._transform._height // 2
+                offset.y = container_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
             case Align.RIGHT:
-                offset.x = container_size.x - self._transform._width
-                offset.y = container_size.y // 2 - self._transform._height // 2
+                offset.x = container_size.x - self._transform._width * Screen.Instance.scale_factor
+                offset.y = container_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
             case Align.TOP:
-                offset.x = container_size.x // 2 - self._transform._width // 2
+                offset.x = container_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
                 offset.y = 0
             case Align.BOTTOM:
-                offset.x = container_size.x // 2 - self._transform._width // 2
-                offset.y = container_size.y - self._transform._height
+                offset.x = container_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
+                offset.y = container_size.y - self._transform._height * Screen.Instance.scale_factor
             case Align.TOPLEFT:
                 offset.x = 0
                 offset.y = 0
             case Align.TOPRIGHT:
-                offset.x = container_size.x - self._transform._width
+                offset.x = container_size.x - self._transform._width * Screen.Instance.scale_factor
                 offset.y = 0
             case Align.BOTTOMLEFT:
                 offset.x = 0
-                offset.y = container_size.y - self._transform._height
+                offset.y = container_size.y - self._transform._height * Screen.Instance.scale_factor
             case Align.BOTTOMRIGHT:
-                offset.x = container_size.x - self._transform._width
-                offset.y = container_size.y - self._transform._height
+                offset.x = container_size.x - self._transform._width * Screen.Instance.scale_factor
+                offset.y = container_size.y - self._transform._height * Screen.Instance.scale_factor
             case _:
                 Console.error("Invalid align value", True, self._root_caller_info)
         
@@ -110,28 +113,28 @@ class BaseObject:
         
         match self._align:
             case Align.MIDDLE:
-                offset.x = parent_size.x // 2 - self._transform._width // 2
-                offset.y = parent_size.y // 2 - self._transform._height // 2
+                offset.x = parent_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
+                offset.y = parent_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
             case Align.LEFT:
-                offset.x = -self._transform._width
-                offset.y = parent_size.y // 2 - self._transform._height // 2
+                offset.x = -self._transform._width * Screen.Instance.scale_factor
+                offset.y = parent_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
             case Align.RIGHT:
                 offset.x = parent_size.x
-                offset.y = parent_size.y // 2 - self._transform._height // 2
+                offset.y = parent_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
             case Align.TOP:
-                offset.x = parent_size.x // 2 - self._transform._width // 2
-                offset.y = -self._transform._height
+                offset.x = parent_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
+                offset.y = -self._transform._height * Screen.Instance.scale_factor
             case Align.BOTTOM:
-                offset.x = parent_size.x // 2 - self._transform._width // 2
+                offset.x = parent_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
                 offset.y = parent_size.y
             case Align.TOPLEFT:
-                offset.x = -self._transform._width
-                offset.y = -self._transform._height
+                offset.x = -self._transform._width * Screen.Instance.scale_factor
+                offset.y = -self._transform._height * Screen.Instance.scale_factor
             case Align.TOPRIGHT:
                 offset.x = parent_size.x
-                offset.y = -self._transform._height
+                offset.y = -self._transform._height * Screen.Instance.scale_factor
             case Align.BOTTOMLEFT:
-                offset.x = -self._transform._width
+                offset.x = -self._transform._width * Screen.Instance.scale_factor
                 offset.y = parent_size.y
             case Align.BOTTOMRIGHT:
                 offset.x = parent_size.x
@@ -162,9 +165,9 @@ class BaseObject:
 
         self.__sorted_children = dict(sorted(layers_dict.items()))
     
-    def _on_transform_property_changed(self):
+    def _refurbish_interior(self) -> None:
         for child in self.__children:
-            child._on_transform_property_changed()
+            child._refurbish_interior()
     
     #region properties
     @property

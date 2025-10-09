@@ -4,11 +4,10 @@ from .object import BaseObject
 from .tools.console import Console
 from .time import Time
 from .screen import Screen
+from .math.vector2 import Vector2
 
 from collections import defaultdict
 from typing import Callable
-
-pygame.init()
 
 
 class Scene:
@@ -90,6 +89,10 @@ class Scene:
             for event in events:
                 if event.type == pygame.QUIT:
                     Screen.quit()
+                elif event.type == pygame.VIDEORESIZE:
+                    Screen.Instance._update_screen(Vector2(event.w, event.h))
+                    for obj in self.__objects:
+                        obj._refurbish_interior()
             
             # updating
             for layer in self.__sorted_objects:

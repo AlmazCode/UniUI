@@ -1,20 +1,23 @@
-from UniUI import Screen, Scene, Vector2, Text, Align, TextAlign, TextAlignX, TextAlignY, SceneManager
+from UniUI import *
 
-import pygame
 import pygame.freetype
 
 from pathlib import Path
 
+# creating most important objects
 screen = Screen(
     resolution = Vector2(1280, 720),
     title = "Test App",
-    pg_flags = pygame.DOUBLEBUF
+    pg_flags = pygame.DOUBLEBUF | pygame.RESIZABLE,
+    priority=0.5
 )
 manager = SceneManager()
 
+# loading font
 font_path = Path(__file__).parent / "assets" / "FiraCode-Regular.ttf"
 font = pygame.freetype.Font(font_path)
 
+# creating custom Text class to control our text
 class CustomText(Text):
     def __init__(self, *, name: Scene, scene: str, **args) -> None:
         super().__init__(name, scene, **args)
@@ -27,10 +30,11 @@ class CustomText(Text):
         self.text = f"FPS: {Screen.fps()}\nHello, World!\nline №3"
         # self.transform.width += 1
         # self.transform.rotation += 100 * Screen.Time.delta_time
-        self.transform.scale.x += 0.005
-        self.transform.scale.y += 0.005
+        # self.transform.scale.x += 0.005
+        # self.transform.scale.y += 0.001
         # self.font_size += 0.1
 
+# creating main scene
 @manager.scene("main")
 def main(scene: Scene) -> None:
 
@@ -166,4 +170,5 @@ def main(scene: Scene) -> None:
         height=200
     )
 
+# loading main scene
 manager.load_scene("main")

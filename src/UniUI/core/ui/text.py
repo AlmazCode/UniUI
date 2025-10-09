@@ -7,6 +7,7 @@ from ..math.vector2 import Vector2
 from ..ui.color import Color
 from ..ui.align import TextAlign, TextAlignX, TextAlignY
 from ..tools.console import Console
+from ..screen import Screen
 
 
 pygame.freetype.init()
@@ -127,13 +128,18 @@ class Text(BaseObject):
         width = height = 0
 
         for line in lines:
-            surf, size = self.__font.render(text=line, fgcolor=self._color.rgba, size=self._font_size)
+            surf, size = self.__font.render(
+                text=line,
+                fgcolor=self._color.rgba,
+                size=self._font_size*Screen.Instance.scale_factor
+            )
+
             surf = surf.convert_alpha()
             rendered_lines[surf] = size
             height += size.height
             width = max(width, size.width)
 
-        height += self._padding * (lenght - 1)
+        height += self._padding * Screen.Instance.scale_factor * (lenght - 1)
 
         return rendered_lines, width, height
 
@@ -153,7 +159,7 @@ class Text(BaseObject):
                 x = 0
 
             surface.blit(surf, (x, y))
-            y += surf_size.height + self._padding
+            y += surf_size.height + self._padding * Screen.Instance.scale_factor
 
         # Apply rotation
         global_rotation = self.global_rotation
@@ -174,9 +180,9 @@ class Text(BaseObject):
         self._preffered_size = Vector2(width, height)
         self.__surface = surface
     
-    def _on_transform_property_changed(self):
+    def _refurbish_interior(self):
         self.__update_surface()
-        super()._on_transform_property_changed()
+        super()._refurbish_interior()
     
     def _get_text_align_offset(self, pos: Vector2) -> Vector2:
         """
@@ -185,19 +191,19 @@ class Text(BaseObject):
         
         match self._text_align.x:
             case TextAlignX.RIGHT:
-                pos.x += self._transform._width - self._preffered_size.x
+                pos.x += self._transform._width * Screen.Instance.scale_factor - self._preffered_size.x
             case TextAlignX.LEFT:
                 ...
             case TextAlignX.MIDDLE:
-                pos.x += self._transform._width // 2 - self._preffered_size.x // 2
+                pos.x += self._transform._width * Screen.Instance.scale_factor // 2 - self._preffered_size.x // 2
         
         match self._text_align.y:
             case TextAlignY.BOTTOM:
-                pos.y += self._transform._height - self._preffered_size.y
+                pos.y += self._transform._height * Screen.Instance.scale_factor - self._preffered_size.y
             case TextAlignY.TOP:
                 ...
             case TextAlignY.MIDDLE:
-                pos.y += self._transform._height // 2 - self._preffered_size.y // 2
+                pos.y += self._transform._height * Screen.Instance.scale_factor // 2 - self._preffered_size.y // 2
 
         return pos
 
@@ -213,6 +219,24 @@ class Text(BaseObject):
 
     def draw(self, surface: pygame.Surface) -> None:
         if self.__surface:
-            surface.blit(self.__surface, self.get_render_position().xy)
-            pygame.draw.rect(surface, (255, 255, 255), (*(self.global_position).xy, *self.transform.wh), 1)
+            
+            # Позиция и размер контейнера (объекта)
+            container_pos = self.global_position
+            container_width = self._transform._width
+            container_height = self._transform._height
+            
+            # Позиция текста (с учетом text_align внутри контейнера)
+            render_pos = self.get_render_position()
+            
+            # Рисуем текст
+            surface.blit(self.__surface, render_pos.xy)
+            
+            # Debug: белый прямоугольник - это контейнер объекта
+            pygame.draw.rect(
+                surface, 
+                (255, 255, 255), 
+                (*container_pos.xy, container_width*Screen.Instance.scale_factor, container_height*Screen.Instance.scale_factor), 
+                1
+            )
+        
         super().draw(surface)
