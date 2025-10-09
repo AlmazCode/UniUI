@@ -1,11 +1,15 @@
 import pygame
+import pygame.freetype
 import numbers
+import os
 
 from ..object import BaseObject
 from ..math.vector2 import Vector2
 from ..ui.color import Color
-from ..ui.align import TextAlign, Align, TextAlignX, TextAlignY
+from ..ui.align import TextAlign, TextAlignX, TextAlignY
 from ..tools.console import Console
+
+pygame.freetype.init()
 
 DEFAULT_FONT = "Arial"
 
@@ -16,7 +20,7 @@ class Text(BaseObject):
         self._text: str = args.get("text", "Hello, World!")
         self._color: Color = args.get("color", Color())
         self._font_path: str | None = args.get("font", None)
-        self._font_size: int = args.get("font_size", 16)
+        self._font_size: float = args.get("font_size", 16)
         self._text_align: TextAlign = args.get("text_align", TextAlign())
         
         padding = args.get("padding", 0)
@@ -24,7 +28,7 @@ class Text(BaseObject):
 
         self._preffered_size: Vector2 = Vector2(0, 0)
 
-        self.__font: pygame.font.Font = None
+        self.__font: pygame.freetype.Font = None
         self.__surface: pygame.Surface = None
 
         self.__load_font()
@@ -44,7 +48,7 @@ class Text(BaseObject):
         return self._font_path
 
     @property
-    def font_size(self) -> int:
+    def font_size(self) -> float:
         return self._font_size
     
     @property
@@ -83,10 +87,9 @@ class Text(BaseObject):
             Console.error("Font must be a path string or None")
     
     @font_size.setter
-    def font_size(self, value: int) -> None:
-        if isinstance(value, int):
+    def font_size(self, value: numbers.Real) -> None:
+        if isinstance(value, numbers.Real):
             self._font_size = value
-            self.__load_font()
             self.__update_surface()
         else:
             Console.error("The value must be an integer")
@@ -115,13 +118,13 @@ class Text(BaseObject):
 
     def __load_font(self) -> None:
         try:
-            if self._font_path:
-                self.__font = pygame.font.Font(self._font_path, self._font_size)
+            if os.path.exists(self._font_path) and os.path.isfile(self._font_path):
+                self.__font = pygame.freetype.Font(self._font_path)
             else:
-                self.__font = pygame.font.SysFont(DEFAULT_FONT, self._font_size)
+                self.__font = pygame.freetype.SysFont(DEFAULT_FONT)
         except Exception as e:
             Console.error(f"Failed to load font: {e}")
-            self.__font = pygame.font.SysFont(DEFAULT_FONT, self._font_size)
+            self.__font = pygame.freetype.SysFont(DEFAULT_FONT)
 
     def __render_lines(self) -> tuple[dict[pygame.Surface, tuple[int, int]], int, int]:
         lines = self._text.split("\n")
@@ -130,7 +133,7 @@ class Text(BaseObject):
         width = height = 0
 
         for line in lines:
-            surf = self.__font.render(line, True, self._color.rgba).convert_alpha()
+            surf = self.__font.render(text=line, fgcolor=self._color.rgba, size=self._font_size)[0].convert_alpha()
             size = surf.get_size()
             rendered_lines[surf] = size
             height += size[1]
