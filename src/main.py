@@ -1,5 +1,8 @@
-import pygame
 from UniUI import Screen, Scene, Vector2, Text, Align, TextAlign, TextAlignX, TextAlignY, SceneManager
+
+import pygame
+import pygame.freetype
+
 from pathlib import Path
 
 screen = Screen(
@@ -10,6 +13,7 @@ screen = Screen(
 manager = SceneManager()
 
 font_path = Path(__file__).parent / "assets" / "FiraCode-Regular.ttf"
+font = pygame.freetype.Font(font_path)
 
 class CustomText(Text):
     def __init__(self, *, name: Scene, scene: str, **args) -> None:
@@ -20,12 +24,12 @@ class CustomText(Text):
     
     def update(self) -> None:
         super().update()
-        self.text = f"FPS: {Screen.Instance.fps}\nHello, World!\nline №3"
+        self.text = f"FPS: {Screen.fps()}\nHello, World!\nline №3"
         # self.transform.width += 1
         # self.transform.rotation += 100 * Screen.Time.delta_time
-        # self.transform.scale.x += 0.005
-        # self.transform.scale.y += 0.005
-        self.font_size += 0.1
+        self.transform.scale.x += 0.005
+        self.transform.scale.y += 0.005
+        # self.font_size += 0.1
 
 @manager.scene("main")
 def main(scene: Scene) -> None:
@@ -35,10 +39,10 @@ def main(scene: Scene) -> None:
         scene=scene,
         font_size=22,
         position=Vector2(0, 0),
-        font=font_path,
+        font=font,
         align=Align.MIDDLE,
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
-        padding=0,
+        padding=50,
         rotation=0
     )
 
@@ -48,7 +52,7 @@ def main(scene: Scene) -> None:
         parent=None,
         font_size=22,
         position=Vector2(0, 0),
-        font=font_path,
+        font=font,
         align=Align.LEFT,
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50,
@@ -63,7 +67,7 @@ def main(scene: Scene) -> None:
         parent=None, 
         font_size=22, 
         position=Vector2(0, 0),
-        font=font_path,
+        font=font,
         align=Align.RIGHT,
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50,
@@ -78,7 +82,7 @@ def main(scene: Scene) -> None:
         parent=None,
         font_size=22,
         position=Vector2(0, 0),
-        font=font_path, 
+        font=font, 
         align=Align.TOP, 
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
@@ -93,7 +97,7 @@ def main(scene: Scene) -> None:
         parent=None,
         font_size=22, 
         position=Vector2(0, 0),
-        font=font_path, 
+        font=font, 
         align=Align.BOTTOM, 
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
@@ -108,7 +112,7 @@ def main(scene: Scene) -> None:
         parent=None, 
         font_size=22, 
         position=Vector2(0, 0),
-        font=font_path, 
+        font=font, 
         align=Align.TOPLEFT, 
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
@@ -123,7 +127,7 @@ def main(scene: Scene) -> None:
         parent=None, 
         font_size=22, 
         position=Vector2(0, 0),
-        font=font_path, 
+        font=font, 
         align=Align.TOPRIGHT, 
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
@@ -138,7 +142,7 @@ def main(scene: Scene) -> None:
         parent=None, 
         font_size=22, 
         position=Vector2(0, 0),
-        font=font_path, 
+        font=font, 
         align=Align.BOTTOMLEFT, 
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
@@ -153,7 +157,7 @@ def main(scene: Scene) -> None:
         parent=None, 
         font_size=22, 
         position=Vector2(0, 0),
-        font=font_path, 
+        font=font, 
         align=Align.BOTTOMRIGHT, 
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 

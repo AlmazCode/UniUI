@@ -1,7 +1,6 @@
 import pygame
 import pygame.freetype
 import numbers
-import os
 
 from ..object import BaseObject
 from ..math.vector2 import Vector2
@@ -9,29 +8,35 @@ from ..ui.color import Color
 from ..ui.align import TextAlign, TextAlignX, TextAlignY
 from ..tools.console import Console
 
+
 pygame.freetype.init()
 
-DEFAULT_FONT = "Arial"
+
+DEFAULT_FONT_NAME = "Arial"
+DEFAULT_FONT = pygame.freetype.SysFont(DEFAULT_FONT_NAME, 0)
+DEFAULT_FONT_SIZE = 16
+DEFAULT_PADDING = 0
+
 
 class Text(BaseObject):
+
     def __init__(self, name: str, scene: str, **args: dict[str, object]) -> None:
         super().__init__(name, scene, **args)
 
         self._text: str = args.get("text", "Hello, World!")
         self._color: Color = args.get("color", Color())
-        self._font_path: str | None = args.get("font", None)
-        self._font_size: float = args.get("font_size", 16)
+        self._font_size: float = args.get("font_size", DEFAULT_FONT_SIZE)
         self._text_align: TextAlign = args.get("text_align", TextAlign())
         
-        padding = args.get("padding", 0)
-        self._padding: float = padding if isinstance(padding, numbers.Real) else 0
+        padding = args.get("padding", None)
+        self._padding: float = padding if isinstance(padding, numbers.Real) else DEFAULT_PADDING
 
         self._preffered_size: Vector2 = Vector2(0, 0)
 
-        self.__font: pygame.freetype.Font = None
+        font = args.get("font", None)
+        self.__font: pygame.freetype.Font = font if isinstance(font, pygame.freetype.Font) else DEFAULT_FONT
         self.__surface: pygame.Surface = None
 
-        self.__load_font()
         self.__update_surface()
 
     # === Properties ===
@@ -44,8 +49,8 @@ class Text(BaseObject):
         return self._color
 
     @property
-    def font(self) -> str | None:
-        return self._font_path
+    def font(self) -> pygame.freetype.Font:
+        return self.__font
 
     @property
     def font_size(self) -> float:
@@ -79,12 +84,11 @@ class Text(BaseObject):
     
     @font.setter
     def font(self, value: str | None) -> None:
-        if isinstance(value, (str, type(None))):
-            self._font_path = value
-            self.__load_font()
+        if isinstance(value, pygame.freetype.Font):
+            self.__font = value
             self.__update_surface()
         else:
-            Console.error("Font must be a path string or None")
+            Console.error("The font must be an object of type pygame.freetype.Font")
     
     @font_size.setter
     def font_size(self, value: numbers.Real) -> None:
@@ -116,28 +120,18 @@ class Text(BaseObject):
 
     # === Private methods ===
 
-    def __load_font(self) -> None:
-        try:
-            if os.path.exists(self._font_path) and os.path.isfile(self._font_path):
-                self.__font = pygame.freetype.Font(self._font_path)
-            else:
-                self.__font = pygame.freetype.SysFont(DEFAULT_FONT)
-        except Exception as e:
-            Console.error(f"Failed to load font: {e}")
-            self.__font = pygame.freetype.SysFont(DEFAULT_FONT)
-
-    def __render_lines(self) -> tuple[dict[pygame.Surface, tuple[int, int]], int, int]:
+    def __render_lines(self) -> tuple[dict[pygame.Surface, pygame.Rect], int, int]:
         lines = self._text.split("\n")
         lenght = len(lines)
-        rendered_lines: dict[pygame.Surface, tuple[int, int]] = {}
+        rendered_lines: dict[pygame.Surface, pygame.Rect] = {}
         width = height = 0
 
         for line in lines:
-            surf = self.__font.render(text=line, fgcolor=self._color.rgba, size=self._font_size)[0].convert_alpha()
-            size = surf.get_size()
+            surf, size = self.__font.render(text=line, fgcolor=self._color.rgba, size=self._font_size)
+            surf = surf.convert_alpha()
             rendered_lines[surf] = size
-            height += size[1]
-            width = max(width, size[0])
+            height += size.height
+            width = max(width, size.width)
 
         height += self._padding * (lenght - 1)
 
@@ -150,16 +144,16 @@ class Text(BaseObject):
 
         y = 0
         for surf in rendered_lines:
-            surf_width, surf_height = rendered_lines[surf]
+            surf_size = rendered_lines[surf]
             if self._text_align.x == TextAlignX.RIGHT:
-                x = width - surf_width
+                x = width - surf_size.width
             elif self._text_align.x == TextAlignX.MIDDLE:
-                x = (width - surf_width) // 2
+                x = (width - surf_size.width) // 2
             else:
                 x = 0
 
             surface.blit(surf, (x, y))
-            y += surf_height + self._padding
+            y += surf_size.height + self._padding
 
         # Apply rotation
         global_rotation = self.global_rotation

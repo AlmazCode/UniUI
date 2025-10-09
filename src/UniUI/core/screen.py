@@ -56,9 +56,8 @@ class Screen:
         Console.clear()
         Console.log("The screen has been successfully initialized")
 
-    @property
-    def fps(self) -> int:
-        return self._fps
+    def fps() -> int:
+        return Screen.Instance._fps
     
     @staticmethod
     def quit() -> NoReturn:
