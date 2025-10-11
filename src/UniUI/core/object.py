@@ -1,4 +1,5 @@
 import pygame
+import numbers
 
 from .math.vector2 import Vector2, zero_vector, unit_vector
 from .tools.console import Console, CallerInfo
@@ -9,35 +10,44 @@ from .screen import Screen
 from typing import Union
 from collections import defaultdict
 
-DEFAULT_SIZE = Vector2(100, 100)
 
 class BaseObject:
     
-    def __init__(self, name: str, scene: 'Scene', **kwargs: dict[str, object]) -> None:
+    def __init__(
+            self, *,
+            name: str,
+            scene: 'Scene',
+            parent: 'BaseObject' = None,
+            active: bool = True,
+            position: Vector2 = None,
+            scale: Vector2 = None,
+            rotation: numbers.Real = 0,
+            size: Vector2 = None,
+            align: Align = Align.MIDDLE,
+            layer: int = 0,
+            **kwargs: dict[str, object]) -> None:
 
         global Scene
         from .scene import Scene
 
         # ======
         self._name: str                     = name
-        self._scene: str                    = scene
-        self._parent: BaseObject            = kwargs.get("parent", None)
+        self._parent: BaseObject            = parent if isinstance(parent, BaseObject) else None
         self.__children: list[BaseObject]   = []
         self.__sorted_children: dict[int, list[BaseObject]] = {}
         self._root_caller_info: CallerInfo  = Console._get_root_caller_info()
 
-        self._active: bool                  = kwargs.get("active", True)
+        self._active: bool                  = active if isinstance(active, bool) else True
 
         self._transform                     = Transform(
-            kwargs.get("position", zero_vector),
-            kwargs.get("scale", unit_vector),
-            kwargs.get("rotation", 0),
-            kwargs.get("width", DEFAULT_SIZE.x),
-            kwargs.get("height", DEFAULT_SIZE.y),
-            self._refurbish_interior
+            position=position,
+            scale=scale,
+            rotation=rotation,
+            size=size,
+            on_property_changed_callback=self._refurbish_interior
         )
-        self._align: Align                  = kwargs.get("align", Align.MIDDLE)
-        self._layer: int                    = kwargs.get("layer", 0)
+        self._align: Align                  = align if isinstance(align, Align) else Align.MIDDLE
+        self._layer: int                    = layer if isinstance(layer, int) else 0
         # ======
 
         self.__scene: Scene = scene
@@ -54,7 +64,8 @@ class BaseObject:
     
     def __str__(self) -> str:
         return f"Object({self._name=}, {self._parent=})"
-
+    
+    #region Private
     def __initialize_children(self, children: list['BaseObject'] | None) -> None:
         if children is None:
             return
@@ -73,32 +84,32 @@ class BaseObject:
         
         match self._align:
             case Align.MIDDLE:
-                offset.x = container_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
-                offset.y = container_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
+                offset.x = container_size.x // 2 - self._transform.width * Screen.Instance.scale_factor // 2
+                offset.y = container_size.y // 2 - self._transform.height * Screen.Instance.scale_factor // 2
             case Align.LEFT:
                 offset.x = 0
-                offset.y = container_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
+                offset.y = container_size.y // 2 - self._transform.height * Screen.Instance.scale_factor // 2
             case Align.RIGHT:
-                offset.x = container_size.x - self._transform._width * Screen.Instance.scale_factor
-                offset.y = container_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
+                offset.x = container_size.x - self._transform.width * Screen.Instance.scale_factor
+                offset.y = container_size.y // 2 - self._transform.height * Screen.Instance.scale_factor // 2
             case Align.TOP:
-                offset.x = container_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
+                offset.x = container_size.x // 2 - self._transform.width * Screen.Instance.scale_factor // 2
                 offset.y = 0
             case Align.BOTTOM:
-                offset.x = container_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
-                offset.y = container_size.y - self._transform._height * Screen.Instance.scale_factor
+                offset.x = container_size.x // 2 - self._transform.width * Screen.Instance.scale_factor // 2
+                offset.y = container_size.y - self._transform.height * Screen.Instance.scale_factor
             case Align.TOPLEFT:
                 offset.x = 0
                 offset.y = 0
             case Align.TOPRIGHT:
-                offset.x = container_size.x - self._transform._width * Screen.Instance.scale_factor
+                offset.x = container_size.x - self._transform.width * Screen.Instance.scale_factor
                 offset.y = 0
             case Align.BOTTOMLEFT:
                 offset.x = 0
-                offset.y = container_size.y - self._transform._height * Screen.Instance.scale_factor
+                offset.y = container_size.y - self._transform.height * Screen.Instance.scale_factor
             case Align.BOTTOMRIGHT:
-                offset.x = container_size.x - self._transform._width * Screen.Instance.scale_factor
-                offset.y = container_size.y - self._transform._height * Screen.Instance.scale_factor
+                offset.x = container_size.x - self._transform.width * Screen.Instance.scale_factor
+                offset.y = container_size.y - self._transform.height * Screen.Instance.scale_factor
             case _:
                 Console.error("Invalid align value", True, self._root_caller_info)
         
@@ -113,32 +124,32 @@ class BaseObject:
         
         match self._align:
             case Align.MIDDLE:
-                offset.x = parent_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
-                offset.y = parent_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
+                offset.x = 0
+                offset.y = 0
             case Align.LEFT:
-                offset.x = -self._transform._width * Screen.Instance.scale_factor
-                offset.y = parent_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
+                offset.x = -self._transform.width * Screen.Instance.scale_factor
+                offset.y = 0
             case Align.RIGHT:
-                offset.x = parent_size.x
-                offset.y = parent_size.y // 2 - self._transform._height * Screen.Instance.scale_factor // 2
+                offset.x = parent_size.x * Screen.Instance.scale_factor
+                offset.y = 0
             case Align.TOP:
-                offset.x = parent_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
-                offset.y = -self._transform._height * Screen.Instance.scale_factor
+                offset.x = 0
+                offset.y = -self._transform.height * Screen.Instance.scale_factor
             case Align.BOTTOM:
-                offset.x = parent_size.x // 2 - self._transform._width * Screen.Instance.scale_factor // 2
-                offset.y = parent_size.y
+                offset.x = 0
+                offset.y = parent_size.y * Screen.Instance.scale_factor
             case Align.TOPLEFT:
-                offset.x = -self._transform._width * Screen.Instance.scale_factor
-                offset.y = -self._transform._height * Screen.Instance.scale_factor
+                offset.x = -self._transform.width * Screen.Instance.scale_factor
+                offset.y = -self._transform.height * Screen.Instance.scale_factor
             case Align.TOPRIGHT:
-                offset.x = parent_size.x
-                offset.y = -self._transform._height * Screen.Instance.scale_factor
+                offset.x = parent_size.x * Screen.Instance.scale_factor
+                offset.y = -self._transform.height * Screen.Instance.scale_factor
             case Align.BOTTOMLEFT:
-                offset.x = -self._transform._width * Screen.Instance.scale_factor
-                offset.y = parent_size.y
+                offset.x = -self._transform.width * Screen.Instance.scale_factor
+                offset.y = parent_size.y * Screen.Instance.scale_factor
             case Align.BOTTOMRIGHT:
-                offset.x = parent_size.x
-                offset.y = parent_size.y
+                offset.x = parent_size.x * Screen.Instance.scale_factor
+                offset.y = parent_size.y * Screen.Instance.scale_factor
             case _:
                 Console.error("Invalid align value", True, self._root_caller_info)
         
@@ -155,7 +166,7 @@ class BaseObject:
             return self._get_align_offset_root(container_size)
         else:
             # Child object: alignment relative to parent
-            parent_size = self._parent._transform.size
+            parent_size = self._parent._transform._size
             return self._get_align_offset_child(parent_size)
 
     def _sort_children(self) -> None:
@@ -168,8 +179,9 @@ class BaseObject:
     def _refurbish_interior(self) -> None:
         for child in self.__children:
             child._refurbish_interior()
-    
-    #region properties
+    #endregion
+
+    #region Properties
     @property
     def transform(self) -> Transform:
         return self._transform
@@ -266,7 +278,7 @@ class BaseObject:
             
             # deactivating object
             elif not value and self._active:
-                if self._parent is None or (self.get_root().active and self._parent.active):
+                if self._parent is None or (self.root_object().active and self._parent.active):
                     # activation: 0 = child, 1 = root
                     self.__scene._deactivate_object(self, 0 if self._parent is not None else 1)
             
@@ -294,15 +306,46 @@ class BaseObject:
             Console.error(f"Expected value for 'layer', got {type(value).__name__}")
     #endregion
 
-    def destroy(self) -> None:
+    #region Public
+    def destroy(self, remove_from_parent: bool = True) -> None:
+        """
+        Destroys the object and all its children, removing them from the scene.
+        
+        This method recursively destroys all child objects and clears internal
+        references. After calling this method, the object should no longer be used.
+        
+        Args:
+            remove_from_parent: If True, removes this object from its parent's
+                            children list. Set to False when destroying children
+                            recursively to avoid modifying the parent's list
+                            during iteration.
+        
+        Note:
+            All child objects are destroyed automatically. You don't need to
+            manually destroy them before destroying the parent.
+        """
+        if self._parent:
+            self._parent.remove_child(self, remove_from_parent)
+        else:
+            self.__scene._remove_object(self)
+
         for obj in self.__children:
-            obj.destroy()
+            obj.destroy(False)
 
-        del self.__children
-        del self.__sorted_children
-        del self
+        self.__children.clear()
+        self.__sorted_children.clear()
 
-    def get_root(self) -> 'BaseObject':
+    def root_object(self) -> 'BaseObject':
+        """
+        Returns the root object in the hierarchy.
+        
+        Traverses up the parent chain until it finds an object with no parent,
+        which is the root of the object tree.
+        
+        Returns:
+            The root object at the top of the hierarchy. If this object has no
+            parent, returns itself.
+        """
         obj = self
         while obj.parent is not None:
             obj = obj.parent
@@ -315,7 +358,7 @@ class BaseObject:
             if resort_objects:
                 self._sort_children()
         else:
-            Console.error("add_child: child must be an Object")
+            Console.error("add_child: child must be an BaseObject")
 
     def remove_child(self, child: 'BaseObject', update_parent: bool = True) -> None:
         if isinstance(child, BaseObject):
@@ -323,14 +366,46 @@ class BaseObject:
             self.__children.remove(child)
             self._sort_children()
         else:
-            Console.error("remove_child: child must be an Object")
+            Console.error("remove_child: child must be an BaseObject")
+    #endregion
 
+    #region UniUI Hooks
     def update(self) -> None:
+        """
+        Updates the object's state.
+        
+        This method is called every frame by the game engine and should contain
+        all logic for updating the object's state (position, animation, behavior, etc.).
+        
+        The base implementation recursively updates all child objects in layer order
+        by calling their `update()` methods.
+        
+        Note:
+            When overriding in subclasses, **be sure to call** `super().update()`
+            to ensure child objects are properly updated. Place it at the beginning
+            or end of the method depending on your update logic.
+        """
         for layer in self.__sorted_children:
             for obj in self.__sorted_children[layer]:
                 obj.update()
 
     def draw(self, surface: pygame.Surface) -> None:
+        """
+        Draws an object on the specified surface.
+    
+        The basic implementation recursively draws all child objects
+        in layer order, calling the `draw()` method for each one.
+        
+        Args:
+            surface: The pygame screen surface on which the drawing is performed.\n
+                    UniUI automatically passes it.
+        
+        Note:
+            When overriding in subclasses, **be sure to call** `super().draw(surface)`\n
+            at the beginning or end of the method, depending on whether the child objects should be\n
+            drawn before or after the current object.
+        """
         for layer in self.__sorted_children:
             for obj in self.__sorted_children[layer]:
                 obj.draw(surface)
+    #endregion

@@ -19,8 +19,8 @@ font = pygame.freetype.Font(font_path)
 
 # creating custom Text class to control our text
 class CustomText(Text):
-    def __init__(self, *, name: Scene, scene: str, **args) -> None:
-        super().__init__(name, scene, **args)
+    def __init__(self, name: Scene, scene: str, **kwargs) -> None:
+        super().__init__(name, scene, **kwargs)
 
         self.transform.width = 200
         self.transform.height = 200
@@ -28,11 +28,14 @@ class CustomText(Text):
     def update(self) -> None:
         super().update()
         self.text = f"FPS: {Screen.fps()}\nHello, World!\nline №3"
-        # self.transform.width += 1
+        self.transform.width += 1
         # self.transform.rotation += 100 * Screen.Time.delta_time
         # self.transform.scale.x += 0.005
         # self.transform.scale.y += 0.001
         # self.font_size += 0.1
+
+        if self.transform.width >= 1000:
+            self.destroy()
 
 # creating main scene
 @manager.scene("main")
@@ -45,7 +48,7 @@ def main(scene: Scene) -> None:
         position=Vector2(0, 0),
         font=font,
         align=Align.MIDDLE,
-        text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
+        text_align=TextAlign(TextAlignX.RIGHT, TextAlignY.MIDDLE),
         padding=50,
         rotation=0
     )
@@ -53,7 +56,7 @@ def main(scene: Scene) -> None:
     text_left = Text(
         name="text_left",
         scene=scene,
-        parent=None,
+        parent=text_middle,
         font_size=22,
         position=Vector2(0, 0),
         font=font,
@@ -61,8 +64,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50,
         rotation=45,
-        width=200,
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_right = Text(
@@ -76,8 +78,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50,
         rotation=45,
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_top = Text(
@@ -91,8 +92,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
         rotation=45, 
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_bottom = Text(
@@ -106,8 +106,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
         rotation=45, 
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_topleft = Text(
@@ -121,8 +120,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
         rotation=45, 
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_topright = Text(
@@ -136,8 +134,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
         rotation=45, 
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_bottomleft = Text(
@@ -151,8 +148,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
         rotation=45, 
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
     text_bottomright = Text(
@@ -166,8 +162,7 @@ def main(scene: Scene) -> None:
         text_align=TextAlign(TextAlignX.MIDDLE, TextAlignY.MIDDLE),
         padding=50, 
         rotation=45, 
-        width=200, 
-        height=200
+        size=Vector2(200, 200)
     )
 
 # loading main scene

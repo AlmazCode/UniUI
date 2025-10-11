@@ -29,14 +29,14 @@ class Scene:
             self.__objects.append(object)
             self._sort_objects()
         else:
-            Console.error("This object does not belong to the Object type")
+            Console.error("This object does not belong to the BaseObject type")
     
     def _remove_object(self, object: BaseObject) -> None:
         if isinstance(object, BaseObject):
             self.__objects.remove(object)
             self._sort_objects()
         else:
-            Console.error("This object does not belong to the Object type")
+            Console.error("This object does not belong to the BaseObject type")
         
     def _activate_object(self, object: BaseObject, mode: int) -> None:
         if isinstance(object, BaseObject):
@@ -44,7 +44,7 @@ class Scene:
             if self.__deactivated_objects.get(object, None):
                 self.__deactivated_objects.pop(object)
         else:
-            Console.error("This object does not belong to the Object type")
+            Console.error("This object does not belong to the BaseObject type")
     
     def _deactivate_object(self, object: BaseObject, mode: int) -> None:
         if isinstance(object, BaseObject):
@@ -52,7 +52,7 @@ class Scene:
             if self.__activated_objects.get(object, None):
                 self.__activated_objects.pop(object)
         else:
-            Console.error("This object does not belong to the Object type")
+            Console.error("This object does not belong to the BaseObject type")
     
     def _sort_objects(self) -> None:
         layers_dict = defaultdict(list)

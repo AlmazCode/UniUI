@@ -21,26 +21,26 @@ DEFAULT_PADDING = 0
 
 class Text(BaseObject):
 
-    def __init__(self, name: str, scene: str, **args: dict[str, object]) -> None:
-        super().__init__(name, scene, **args)
+    def __init__(self, name: str, scene: str, **kwargs: dict[str, object]) -> None:
+        super().__init__(name=name, scene=scene, **kwargs)
 
-        self._text: str = args.get("text", "Hello, World!")
-        self._color: Color = args.get("color", Color())
-        self._font_size: float = args.get("font_size", DEFAULT_FONT_SIZE)
-        self._text_align: TextAlign = args.get("text_align", TextAlign())
+        self._text: str = kwargs.get("text", "Hello, World!")
+        self._color: Color = kwargs.get("color", Color())
+        self._font_size: float = kwargs.get("font_size", DEFAULT_FONT_SIZE)
+        self._text_align: TextAlign = kwargs.get("text_align", TextAlign())
         
-        padding = args.get("padding", None)
+        padding = kwargs.get("padding", None)
         self._padding: float = padding if isinstance(padding, numbers.Real) else DEFAULT_PADDING
 
         self._preffered_size: Vector2 = Vector2(0, 0)
 
-        font = args.get("font", None)
+        font = kwargs.get("font", None)
         self.__font: pygame.freetype.Font = font if isinstance(font, pygame.freetype.Font) else DEFAULT_FONT
         self.__surface: pygame.Surface = None
 
         self.__update_surface()
 
-    # === Properties ===
+    #region Properties
     @property
     def text(self) -> str:
         return self._text
@@ -68,8 +68,9 @@ class Text(BaseObject):
     @property
     def preffered_size(self) -> Vector2:
         return self._preffered_size
+    #endregion
     
-    # === Setters ===
+    #region Setters
     @text.setter
     def text(self, value: str) -> None:
         self._text = str(value)
@@ -118,8 +119,9 @@ class Text(BaseObject):
     @preffered_size.setter
     def preffered_size(self, value: Vector2) -> None:
         Console.error("You cannot change preffered_size, it is a private variable.")
+    #endregion
 
-    # === Private methods ===
+    #region Private
 
     def __render_lines(self) -> tuple[dict[pygame.Surface, pygame.Rect], int, int]:
         lines = self._text.split("\n")
@@ -191,28 +193,29 @@ class Text(BaseObject):
         
         match self._text_align.x:
             case TextAlignX.RIGHT:
-                pos.x += self._transform._width * Screen.Instance.scale_factor - self._preffered_size.x
+                pos.x += self._transform.width * Screen.Instance.scale_factor - self._preffered_size.x
             case TextAlignX.LEFT:
                 ...
             case TextAlignX.MIDDLE:
-                pos.x += self._transform._width * Screen.Instance.scale_factor // 2 - self._preffered_size.x // 2
+                pos.x += self._transform.width * Screen.Instance.scale_factor // 2 - self._preffered_size.x // 2
         
         match self._text_align.y:
             case TextAlignY.BOTTOM:
-                pos.y += self._transform._height * Screen.Instance.scale_factor - self._preffered_size.y
+                pos.y += self._transform.height * Screen.Instance.scale_factor - self._preffered_size.y
             case TextAlignY.TOP:
                 ...
             case TextAlignY.MIDDLE:
-                pos.y += self._transform._height * Screen.Instance.scale_factor // 2 - self._preffered_size.y // 2
+                pos.y += self._transform.height * Screen.Instance.scale_factor // 2 - self._preffered_size.y // 2
 
         return pos
+    #endregion
 
-    # === Public Methods ===
-    
+    #region Public 
     def get_render_position(self) -> Vector2:
         return self._get_text_align_offset(self.global_position)
+    #endregion
 
-    # === Pygame Hooks ===
+    #region UniUI Hooks
 
     def update(self) -> None:
         super().update()
@@ -220,23 +223,22 @@ class Text(BaseObject):
     def draw(self, surface: pygame.Surface) -> None:
         if self.__surface:
             
-            # Позиция и размер контейнера (объекта)
             container_pos = self.global_position
-            container_width = self._transform._width
-            container_height = self._transform._height
+            container_width = self._transform.width
+            container_height = self._transform.height
             
-            # Позиция текста (с учетом text_align внутри контейнера)
-            render_pos = self.get_render_position()
-            
-            # Рисуем текст
-            surface.blit(self.__surface, render_pos.xy)
-            
-            # Debug: белый прямоугольник - это контейнер объекта
+            surface.blit(self.__surface, self.get_render_position().xy)
+            # FOR DEBUG
             pygame.draw.rect(
                 surface, 
                 (255, 255, 255), 
-                (*container_pos.xy, container_width*Screen.Instance.scale_factor, container_height*Screen.Instance.scale_factor), 
+                (
+                    *container_pos.xy,
+                    container_width*Screen.Instance.scale_factor,
+                    container_height*Screen.Instance.scale_factor
+                ), 
                 1
             )
         
         super().draw(surface)
+    #endregion

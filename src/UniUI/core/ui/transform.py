@@ -6,12 +6,14 @@ from ..tools.console import Console
 from typing import Callable
 
 class Transform:
+
+    DEFAULT_SIZE = Vector2(100, 100)
+
     def __init__(self,
                  position: Vector2 = None,
                  scale: Vector2 = None,
-                 rotation: Vector2 = None,
-                 width: float = None,
-                 height: float = None,
+                 rotation: numbers.Real = None,
+                 size: Vector2 = None,
                  on_property_changed_callback: Callable[[], None] = None
     ) -> None:
         
@@ -21,9 +23,8 @@ class Transform:
         self._scale     = Vector2(scale._x, scale._y, self._on_property_changed) \
             if scale is not None and isinstance(scale, Vector2) else Vector2(1, 1, self._on_property_changed)
         self._rotation  = rotation if rotation is not None and isinstance(rotation, numbers.Real) else 0
-        self._width     = width if width is not None and isinstance(width, float | int) else 0
-        self._height    = height if height is not None and isinstance(height, float | int) else 0
-        self._size      = Vector2(self._width, self._height)
+        self._size      = size if isinstance(size, Vector2) else Vector2(
+            Transform.DEFAULT_SIZE.x, Transform.DEFAULT_SIZE.y)
     
     @property
     def position(self) -> Vector2:
@@ -43,15 +44,15 @@ class Transform:
 
     @property
     def width(self) -> Vector2:
-        return self._width
+        return self._size._x
     
     @property
     def height(self) -> Vector2:
-        return self._height
+        return self._size._y
 
     @property
     def wh(self) -> tuple[float | int, float |int]:
-        return self._width, self._height
+        return self._size.xy
 
 
     @position.setter
@@ -80,8 +81,7 @@ class Transform:
     @width.setter
     def width(self, value: float | int) -> None:
         if isinstance(value, float | int):
-            self._width = value
-            self._size = Vector2(self._width, self._height)
+            self._size._x = value
             self._on_property_changed.invoke()
         else:
             Console.error("The value can only be a float or an integer")
@@ -89,8 +89,7 @@ class Transform:
     @height.setter
     def height(self, value: float | int) -> None:
         if isinstance(value, float | int):
-            self._height = value
-            self._size = Vector2(self._width, self._height)
+            self._size._y = value
             self._on_property_changed.invoke()
         else:
             Console.error("The value can only be a float or an integer")
@@ -101,13 +100,13 @@ class Transform:
             if len(value) == 2:
                 call_event: bool = False
                 if isinstance(value[0], float | int):
-                    self._width = value[0]
+                    self._size._x = value[0]
                     call_event = True
                 else:
                     Console.error("The width can only be a float or an integer")
                 
                 if isinstance(value[1], float | int):
-                    self._height = value[1]
+                    self._size._y = value[1]
                     call_event = True
                 else:
                     Console.error("The height can only be a float or an integer")
